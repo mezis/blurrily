@@ -8,11 +8,20 @@ Gem::Specification.new do |gem|
   gem.version       = Blurrily::VERSION
   gem.authors       = ["Julien Letessier"]
   gem.email         = ["julien.letessier@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.description   = %q{Native fuzzy string search}
+  gem.summary       = %q{Native fuzzy string search}
+  gem.homepage      = "http://github.com/mezis/blurrily"
 
-  gem.files         = `git ls-files`.split($/)
+  gem.add_development_dependency 'rake'
+  gem.add_development_dependency 'rake-compiler'
+  gem.add_development_dependency 'pry'
+  gem.add_development_dependency 'pry-nav'
+  gem.add_development_dependency 'pry-doc'
+
+  gem.extensions    = ['ext/blurrily/extconf.rb']
+  gem.files         = Dir.glob('lib/**/*.rb') +
+                      Dir.glob('ext/**/*.{c,h,rb}') +
+                      Dir.glob('*.{md,txt}')
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]

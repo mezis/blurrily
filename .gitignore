@@ -15,3 +15,8 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
+
+# Generated files for C extension
+Makefile
+*.o
+*.bundle
