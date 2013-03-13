@@ -42,6 +42,9 @@ int blurrily_storage_save(trigram_map haystack, char* path);
   string, <weight> will be using to discriminate entries that match "as
   well" when searching.
 
+  If <weight> is zero, it will be replaced by the number of characters in
+  the <needle>.
+
   Returns positive on success, negative on failure.
 */
 int blurrily_storage_put(trigram_map haystack, char* needle, uint32_t reference, uint32_t weight);
