@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include "storage.h"
 
 /* our new native method; it just returns
  * the string "bonjour!" */
