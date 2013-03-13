@@ -8,13 +8,16 @@
 #include <inttypes.h>
 #include "tokeniser.h"
 
+struct trigram_map_t;
 typedef struct trigram_map_t* trigram_map;
 
-typedef struct {
+struct trigram_result_t {
   uint32_t reference;
   uint32_t matches;
   uint32_t weight;
-} trigram_result_t;
+};
+typedef struct trigram_result_t* trigram_result;
+
 
 /* 
   Create a new trigram map, resident in memory.
@@ -61,4 +64,4 @@ int blurrily_storage_put(trigram_map haystack, char* needle, uint32_t reference,
 
   Returns number of matches on success, negative on failure.
 */
-int blurrily_storage_find(trigram_map haystack, char* needle, uint16_t limit, trigram_result_t* results);
+int blurrily_storage_find(trigram_map haystack, char* needle, uint16_t limit, trigram_result results);
