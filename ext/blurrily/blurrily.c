@@ -17,15 +17,33 @@ static void blurrily_free_map(void* haystack)
 static VALUE blurrily_initialize(VALUE self) {
   trigram_map haystack = (trigram_map)NULL;
   int         res      = -1;
-  VALUE       info     = (VALUE)NULL;
+  VALUE       wrapper  = (VALUE)NULL;
 
   res = blurrily_storage_new(&haystack);
   assert(res >= 0);
 
-  info = Data_Wrap_Struct(cWrapper, 0, blurrily_free_map, (void*)haystack);
-  // XXX info ?
+  wrapper = Data_Wrap_Struct(cWrapper, 0, blurrily_free_map, (void*)haystack);
+  rb_ivar_set(self, rb_intern("@wrapper"), wrapper);
 
   return Qtrue;
+}
+
+
+static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE rb_weight) {
+  trigram_map  haystack  = (trigram_map)NULL;
+  int          res       = -1;
+  VALUE        wrapper   = (VALUE)NULL;
+  char*        needle    = StringValuePtr(rb_needle);
+  uint32_t     reference = NUM2UINT(rb_reference);
+  uint32_t     weight    = NUM2UINT(rb_weight);
+
+  wrapper = rb_ivar_get(self, rb_intern("@wrapper"));
+  Data_Get_Struct(wrapper, struct trigram_map_t, haystack);
+
+  res = blurrily_storage_put(haystack, needle, reference, weight);
+  assert(res >= 0);
+
+  return Qnil;
 }
 
 
@@ -48,6 +66,7 @@ void Init_blurrily(void) {
   assert(cWrapper != (VALUE)NULL);
 
   rb_define_method(klass, "initialize", blurrily_initialize, 0);
+  rb_define_method(klass, "put",        blurrily_put,        3);
 
   /* the blurrily_bonjour function can be called
    * from ruby as "blurrily.bonjour" */

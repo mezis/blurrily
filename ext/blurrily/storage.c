@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "storage.h"
 
 #define TRIGRAM_COUNT               19683
@@ -48,9 +49,9 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
 
   haystack->total_entries = 0;
   for(k = 0, ptr = haystack->map ; k < TRIGRAM_COUNT ; ++k, ++ptr) {
-    ptr->buckets = TRIGRAM_ENTRIES_START_SIZE;
+    ptr->buckets = 0;
     ptr->used    = 0;
-    ptr->entries = (trigram_entry_t*) malloc(TRIGRAM_ENTRIES_START_SIZE * sizeof(trigram_entry_t));
+    ptr->entries = (trigram_entry_t*)NULL;
   }
 
   *haystack_ptr = haystack;
@@ -86,6 +87,39 @@ int blurrily_storage_save(trigram_map haystack, char* path)
 
 int blurrily_storage_put(trigram_map haystack, char* needle, uint32_t reference, uint32_t weight)
 {
+  int        nb_trigrams  = -1;
+  int        length       = strlen(needle);
+  trigram_t* trigrams     = (trigram_t*)NULL;
+
+  trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
+  nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
+
+  if (weight <= 0) weight = length;
+
+  for (int k = 0; k < nb_trigrams; ++k) {
+    trigram_t          t       = trigrams[k];
+    trigram_entries_t* entries = &haystack->map[t];
+    trigram_entry_t    entry   = { reference, weight };
+
+    // allocate more space as needed (exponential growth)
+    if (entries->buckets == 0) {
+      entries->buckets = TRIGRAM_ENTRIES_START_SIZE;
+      entries->entries = (trigram_entry_t*) malloc(entries->buckets * sizeof(trigram_entry_t));
+    }
+    if (entries->used >= entries->buckets) {
+      entries->buckets *= 2;
+      entries->entries = realloc(
+        entries->entries,
+        entries->buckets * sizeof(trigram_entry_t)
+      );
+    }
+    entries->entries[entries->used] = entry;
+    
+    entries->used++;
+    haystack->total_entries++;
+  }
+
+  free((void*)trigrams);
   return 0;
 }
 
