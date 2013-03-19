@@ -12,11 +12,14 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{Native fuzzy string search}
   gem.homepage      = "http://github.com/mezis/blurrily"
 
+  gem.add_dependency 'activesupport'
+
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rake-compiler'
   gem.add_development_dependency 'pry'
   gem.add_development_dependency 'pry-nav'
   gem.add_development_dependency 'pry-doc'
+  gem.add_development_dependency 'progressbar'
 
   gem.extensions    = ['ext/blurrily/extconf.rb']
   gem.files         = Dir.glob('lib/**/*.rb') +

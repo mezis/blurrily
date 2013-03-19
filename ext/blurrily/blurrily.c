@@ -2,8 +2,11 @@
 #include <assert.h>
 #include "storage.h"
 
+/******************************************************************************/
 
 static VALUE cWrapper = (VALUE)NULL;
+
+/******************************************************************************/
 
 static void blurrily_free_map(void* haystack)
 {
@@ -13,6 +16,7 @@ static void blurrily_free_map(void* haystack)
   assert(res >= 0);
 }
 
+/******************************************************************************/
 
 static VALUE blurrily_initialize(VALUE self) {
   trigram_map haystack = (trigram_map)NULL;
@@ -28,6 +32,7 @@ static VALUE blurrily_initialize(VALUE self) {
   return Qtrue;
 }
 
+/******************************************************************************/
 
 static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE rb_weight) {
   trigram_map  haystack  = (trigram_map)NULL;
@@ -46,14 +51,25 @@ static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE
   return Qnil;
 }
 
+/******************************************************************************/
 
-// /* our new native method; it just returns
-//  * the string "bonjour!" */
-// static VALUE blurrily_bonjour(VALUE self) {
-//   return rb_str_new2("bonjour!");
-// }
+static VALUE blurrily_save(VALUE self, VALUE rb_path) {
+  trigram_map  haystack  = (trigram_map)NULL;
+  int          res       = -1;
+  VALUE        wrapper   = (VALUE)NULL;
+  const char*  path      = StringValuePtr(rb_path);
 
-/* ruby calls this to load the extension */
+  wrapper = rb_ivar_get(self, rb_intern("@wrapper"));
+  Data_Get_Struct(wrapper, struct trigram_map_t, haystack);
+
+  res = blurrily_storage_save(haystack, path);
+  assert(res >= 0);
+
+  return Qnil;
+}
+
+/******************************************************************************/
+
 void Init_blurrily(void) {
   /* assume we haven't yet defined blurrily */
   VALUE module = rb_define_module("Blurrily");
@@ -67,9 +83,6 @@ void Init_blurrily(void) {
 
   rb_define_method(klass, "initialize", blurrily_initialize, 0);
   rb_define_method(klass, "put",        blurrily_put,        3);
-
-  /* the blurrily_bonjour function can be called
-   * from ruby as "blurrily.bonjour" */
-  // rb_define_singleton_method(module,
-  //     "bonjour", blurrily_bonjour, 0);
+  rb_define_method(klass, "save",       blurrily_save,       1);
+  return;
 }

@@ -27,7 +27,7 @@ int blurrily_storage_new(trigram_map* haystack);
 /* 
   Load an existing trigram map from disk.
 */
-int blurrily_storage_load(trigram_map* haystack, char* path);
+int blurrily_storage_load(trigram_map* haystack, const char* path);
 
 /* 
   Release resources claimed by <new> or <open>.
@@ -38,7 +38,7 @@ int blurrily_storage_close(trigram_map* haystack);
   Persist to disk what <blurrily_storage_new> or <blurrily_storage_open>
   gave you.
 */
-int blurrily_storage_save(trigram_map haystack, char* path);
+int blurrily_storage_save(trigram_map haystack, const char* path);
 
 /*
   Add a new string to the map. <reference> is your identifier for that
@@ -50,7 +50,7 @@ int blurrily_storage_save(trigram_map haystack, char* path);
 
   Returns positive on success, negative on failure.
 */
-int blurrily_storage_put(trigram_map haystack, char* needle, uint32_t reference, uint32_t weight);
+int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t reference, uint32_t weight);
 
 /*
   Return at most <limit> entries matching <needle> from the <haystack>.
@@ -64,4 +64,4 @@ int blurrily_storage_put(trigram_map haystack, char* needle, uint32_t reference,
 
   Returns number of matches on success, negative on failure.
 */
-int blurrily_storage_find(trigram_map haystack, char* needle, uint16_t limit, trigram_result results);
+int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t limit, trigram_result results);

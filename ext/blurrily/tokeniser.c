@@ -3,16 +3,10 @@
 #include <stdio.h>
 #include <math.h>
 #include "tokeniser.h"
+#include "log.h"
 
-#define BASE 28
 
-#define DEBUG 0
-
-#if DEBUG
-#define LOG(...) fprintf(__VA_ARGS__)
-#else
-#define LOG(...)
-#endif
+/******************************************************************************/
 
 static int ipow(int a, int b)
 {
@@ -22,22 +16,26 @@ static int ipow(int a, int b)
   return result;
 }
 
-static void string_to_code(char* input, trigram_t *output)
+/******************************************************************************/
+
+static void string_to_code(const char* input, trigram_t *output)
 {
   trigram_t result = 0;
 
   for (int k = 0 ; k < 3; ++k) {
     if (input[k] == '*') continue;
-    result += ipow(BASE, k) * (input[k] - 'a' + 1);
+    result += ipow(TRIGRAM_BASE, k) * (input[k] - 'a' + 1);
   }
 
   *output = result;
 }
 
+/******************************************************************************/
+
 static void code_to_string(trigram_t input, char* output)
 {
   for (int k = 0 ; k < 3; ++k) {
-    uint16_t elem = input / ipow(BASE, k) % BASE;
+    uint16_t elem = input / ipow(TRIGRAM_BASE, k) % TRIGRAM_BASE;
     if (elem == 0) {
       output[k] = '*';
     } else {
@@ -47,6 +45,8 @@ static void code_to_string(trigram_t input, char* output)
   output[3] = 0;
 }
 
+/******************************************************************************/
+
 static int blurrily_compare_trigrams(const void* left_p, const void* right_p)
 {
   trigram_t* left  = (trigram_t*)left_p;
@@ -54,7 +54,9 @@ static int blurrily_compare_trigrams(const void* left_p, const void* right_p)
   return (int)*left - (int)*right;
 }
 
-int blurrily_tokeniser_parse_string(char* input, trigram_t* output)
+/******************************************************************************/
+
+int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
 {
   int   length     = strlen(input);
   char* normalized = (char*) malloc(length+5);
@@ -73,16 +75,15 @@ int blurrily_tokeniser_parse_string(char* input, trigram_t* output)
   }
 
   // print results
-  LOG(stderr, "-- normalization\n");
-  LOG(stderr, "%s -> %s\n", input, normalized);
-  LOG(stderr, "-- tokenisation\n");
+  LOG("-- normalization\n");
+  LOG("%s -> %s\n", input, normalized);
+  LOG("-- tokenisation\n");
   for (int k = 0; k <= length; ++k) {
     char res[4];
 
     code_to_string(output[k], res);
 
-    LOG(stderr,
-      "%c%c%c -> %d -> %s\n",
+    LOG("%c%c%c -> %d -> %s\n",
       normalized[k], normalized[k+1], normalized[k+2],
       output[k], res
     );
@@ -106,16 +107,18 @@ int blurrily_tokeniser_parse_string(char* input, trigram_t* output)
   qsort((void*)output, length+1, sizeof(trigram_t), &blurrily_compare_trigrams);
 
   // print again
-  LOG(stderr, "-- after sort/compact\n");
+  LOG("-- after sort/compact\n");
   for (int k = 0; k <= length-duplicates; ++k) {
     char res[4];
     code_to_string(output[k], res);
-    LOG(stderr, "%d -> %s\n", output[k], res);
+    LOG("%d -> %s\n", output[k], res);
   }
 
   free((void*)normalized);
   return length+1 - duplicates;
 }
+
+/******************************************************************************/
 
 int blurrily_tokeniser_trigram(trigram_t input, char* output)
 {

@@ -16,6 +16,8 @@
 */
 #include <inttypes.h>
 
+#define TRIGRAM_BASE 28
+
 typedef uint16_t trigram_t;
 
 /* 
@@ -26,7 +28,7 @@ typedef uint16_t trigram_t;
 
   Returns the number of trigrams on success, a negative number on failure.
 */
-int blurrily_tokeniser_parse_string(char* input, trigram_t* output);
+int blurrily_tokeniser_parse_string(const char* input, trigram_t* output);
 
 
 /*
