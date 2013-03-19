@@ -1,6 +1,9 @@
-# Blurrily
+# Blurrily — Fast fuzzy text search
 
-TODO: Write a gem description
+This will be a C version of [fuzzily](http://github.com/mezis/fuzzily), a
+Ruby gem to perform fuzzy text searching.
+
+WORK IN PROGRESS.
 
 ## Installation
 
