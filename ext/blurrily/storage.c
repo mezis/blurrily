@@ -47,12 +47,35 @@ typedef struct trigram_entries_t trigram_entries_t;
 // there are 28^3 = 19,683 possible trigrams
 struct trigram_map_t
 {
+  char              magic[6]; // the string "trigra"
+  uint8_t           big_endian;
+  uint8_t           pointer_size;
+
   uint32_t          total_entries;
   uint32_t          mapped_size;
   
   trigram_entries_t map[TRIGRAM_COUNT];
 };
 typedef struct trigram_map_t trigram_map_t;
+
+/******************************************************************************/
+
+// 1 if big endian 0 otherwise
+static uint8_t get_big_endian()
+{
+  uint32_t magic = 0xAA0000BB;
+  uint8_t  head  = *((uint8_t*) &magic);
+
+  return (head == 0xBB) ? 1 : 0;
+}
+
+/******************************************************************************/
+
+// 4  or 8 (bytes)
+static uint8_t get_pointer_size()
+{
+  return (uint8_t) sizeof(void*);
+}
 
 /******************************************************************************/
 
@@ -64,6 +87,12 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
 
   fprintf(stderr, "blurrily_storage_new\n");
   haystack = (trigram_map) malloc(sizeof(trigram_map_t));
+
+  memset(haystack, 0x00, sizeof(trigram_map_t));
+
+  memcpy(haystack->magic, "trigra", 6);
+  haystack->big_endian   = get_big_endian();
+  haystack->pointer_size = get_pointer_size();
 
   haystack->mapped_size = 0; // not mapped, as we just created it in memory
   haystack->total_entries = 0;
