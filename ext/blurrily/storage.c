@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "storage.h"
 
@@ -122,6 +123,10 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   size_t  total_size  = 0;
   size_t  offset      = 0;
   trigram_map header  = NULL;
+  char    path_tmp[PATH_MAX];
+
+  // path for temporary file
+  snprintf(path_tmp, PATH_MAX, "%s.tmp", path);
 
   // compute storage space required
   total_size += round_to_page(sizeof(trigram_map_t));
@@ -131,7 +136,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   }
 
   // open and map file
-  fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0644);
+  fd = open(path_tmp, O_RDWR | O_CREAT | O_TRUNC, 0644);
   assert(fd >= 0);
 
   res = ftruncate(fd, total_size);
@@ -169,6 +174,10 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   assert(res >= 0);
 
   res = close(fd);
+  assert(res >= 0);
+
+  // commit by renaming the file
+  res = rename(path_tmp, path);
   assert(res >= 0);
 
   return 0;
