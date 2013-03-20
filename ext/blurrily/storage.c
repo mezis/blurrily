@@ -48,6 +48,8 @@ typedef struct trigram_entries_t trigram_entries_t;
 struct trigram_map_t
 {
   uint32_t          total_entries;
+  uint32_t          mapped_size;
+  
   trigram_entries_t map[TRIGRAM_COUNT];
 };
 typedef struct trigram_map_t trigram_map_t;
@@ -63,6 +65,7 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
   fprintf(stderr, "blurrily_storage_new\n");
   haystack = (trigram_map) malloc(sizeof(trigram_map_t));
 
+  haystack->mapped_size = 0; // not mapped, as we just created it in memory
   haystack->total_entries = 0;
   for(k = 0, ptr = haystack->map ; k < TRIGRAM_COUNT ; ++k, ++ptr) {
     ptr->buckets = 0;
@@ -86,16 +89,23 @@ int blurrily_storage_load(trigram_map* haystack, const char* path)
 int blurrily_storage_close(trigram_map* haystack_ptr)
 {
   trigram_map         haystack = *haystack_ptr;
-  trigram_entries_t*  ptr      = NULL;
-  int                 k        = 0;
+  int                 res      = -1;
 
   fprintf(stderr, "blurrily_storage_close\n");
 
-  for(k = 0, ptr = haystack->map ; k < TRIGRAM_COUNT ; ++k, ++ptr) {
-    free(ptr->entries);
+  if (haystack->mapped_size) {
+    res = munmap(haystack, haystack->mapped_size);
+    assert(res >= 0);
+
+  } else {
+    trigram_entries_t*  ptr = haystack->map;
+    for(int k = 0 ; k < TRIGRAM_COUNT ; ++k) {
+      free(ptr->entries);
+      ++ptr;
+    }
+    free(haystack);
   }
 
-  free(haystack);
   *haystack_ptr = NULL;
   return 0;
 }
