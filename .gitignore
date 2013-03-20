@@ -20,3 +20,7 @@ tmp
 Makefile
 *.o
 *.bundle
+
+# Data files
+*.bz2
+*.trigrams
