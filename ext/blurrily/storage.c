@@ -20,7 +20,6 @@
 /******************************************************************************/
 
 // one trigram entry -- client reference and sorting weight
-// (note that keeping this 64bit wide helps)
 struct trigram_entry_t
 {
   uint32_t reference;
@@ -36,6 +35,7 @@ struct trigram_entries_t
 {
   uint32_t         buckets;
   uint32_t         used;
+  uint8_t          dirty;           // not optimised (presorted) yet
 
   trigram_entry_t* entries;         // set when the structure is in memory
   size_t           entries_offset;  // set when the structure is on disk
@@ -83,6 +83,38 @@ static uint8_t get_pointer_size()
 
 /******************************************************************************/
 
+static int compare_entries(const void* left_p, const void* right_p)
+{
+  trigram_entry_t* left  = (trigram_entry_t*)left_p;
+  trigram_entry_t* right = (trigram_entry_t*)right_p;
+  return (int)left->reference - (int)right->reference;
+}
+
+// compares matches on #matches (descending) then weight (ascending)
+static int compare_matches(const void* left_p, const void* right_p)
+{
+  trigram_match_t* left  = (trigram_match_t*)left_p;
+  trigram_match_t* right = (trigram_match_t*)right_p;
+  int delta = left->matches - right->matches;
+
+  return (delta != 0) ? delta : (right->weight - left->weight);
+
+}
+
+/******************************************************************************/
+
+static void sort_map_if_dirty(trigram_entries_t* map)
+{ 
+  int res = -1;
+  if (! map->dirty) return;
+
+  res = mergesort(map->entries, map->used, sizeof(trigram_entry_t), &compare_entries);
+  assert(res >= 0);
+  map->dirty = 0;
+}
+
+/******************************************************************************/
+
 int blurrily_storage_new(trigram_map* haystack_ptr)
 {
   trigram_map         haystack = (trigram_map)NULL;
@@ -103,6 +135,7 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
   for(k = 0, ptr = haystack->map ; k < TRIGRAM_COUNT ; ++k, ++ptr) {
     ptr->buckets = 0;
     ptr->used    = 0;
+    ptr->dirty   = 0;
     ptr->entries = (trigram_entry_t*)NULL;
   }
 
@@ -199,6 +232,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   // copy each map, set offset in header
   for (int k = 0; k < TRIGRAM_COUNT; ++k) {
     size_t block_size = get_map_size(haystack, k);
+    sort_map_if_dirty(haystack->map + k);
 
     if (block_size > 0) {
       memcpy(ptr+offset, haystack->map[k].entries, block_size);
@@ -275,6 +309,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
     map->entries[map->used] = entry;
     
     map->used++;
+    map->dirty = 1;
     haystack->total_entries++;
     LOG("- total %d entries\n", haystack->total_entries);
   }
@@ -282,27 +317,6 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
   free((void*)trigrams);
   return 0;
 }
-
-/******************************************************************************/
-
-static int compare_entries(const void* left_p, const void* right_p)
-{
-  trigram_entry_t* left  = (trigram_entry_t*)left_p;
-  trigram_entry_t* right = (trigram_entry_t*)right_p;
-  return (int)left->reference - (int)right->reference;
-}
-
-// compares matches on #matches (descending) then weight (ascending)
-static int compare_matches(const void* left_p, const void* right_p)
-{
-  trigram_match_t* left  = (trigram_match_t*)left_p;
-  trigram_match_t* right = (trigram_match_t*)right_p;
-  int delta = left->matches - right->matches;
-
-  return (delta != 0) ? delta : (right->weight - left->weight);
-
-}
-
 
 /******************************************************************************/
 
@@ -337,12 +351,13 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
     trigram_t t       = trigrams[k];
     size_t    buckets = haystack->map[t].used;
 
+    sort_map_if_dirty(haystack->map + t);
     memcpy(entry_ptr, haystack->map[t].entries, buckets * sizeof(trigram_entry_t));
     entry_ptr += buckets;
   }
 
   // sort data
-  qsort(entries, nb_entries, sizeof(trigram_entry_t), &compare_entries);
+  mergesort(entries, nb_entries, sizeof(trigram_entry_t), &compare_entries);
 
   // count distinct matches
   uint32_t last_reference = (uint32_t)-1;
