@@ -43,6 +43,10 @@ struct trigram_entries_t
 typedef struct trigram_entries_t trigram_entries_t;
 
 
+// match structure (see header)
+typedef struct trigram_match_t trigram_match_t;
+
+
 // hash map of all possible trigrams to collection of entries
 // there are 28^3 = 19,683 possible trigrams
 struct trigram_map_t
@@ -54,7 +58,7 @@ struct trigram_map_t
   uint32_t          total_entries;
   uint32_t          mapped_size;
   
-  trigram_entries_t map[TRIGRAM_COUNT];
+  trigram_entries_t map[TRIGRAM_COUNT]; // this whole structure is ~500KB
 };
 typedef struct trigram_map_t trigram_map_t;
 
@@ -281,7 +285,104 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
 
 /******************************************************************************/
 
-int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t limit, trigram_result results)
+static int compare_entries(const void* left_p, const void* right_p)
 {
+  trigram_entry_t* left  = (trigram_entry_t*)left_p;
+  trigram_entry_t* right = (trigram_entry_t*)right_p;
+  return (int)left->reference - (int)right->reference;
+}
+
+// compares matches on #matches (descending) then weight (ascending)
+static int compare_matches(const void* left_p, const void* right_p)
+{
+  trigram_match_t* left  = (trigram_match_t*)left_p;
+  trigram_match_t* right = (trigram_match_t*)right_p;
+  int delta = left->matches - right->matches;
+
+  return (delta != 0) ? delta : (right->weight - left->weight);
+
+}
+
+
+/******************************************************************************/
+
+int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t limit, trigram_match results)
+{
+  int              nb_trigrams = -1;
+  int              length      = strlen(needle);
+  trigram_t*       trigrams    = (trigram_t*)NULL;
+  size_t           nb_entries  = 0;
+  trigram_entry_t* entries     = NULL;
+  trigram_entry_t* entry_ptr   = NULL;
+  size_t           nb_matches  = 0;
+  trigram_match_t* matches     = NULL;
+  trigram_match_t* match_ptr   = NULL;
+
+  trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
+  nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
+
+  // measure size required for sorting
+  for (int k = 0; k < nb_trigrams; ++k) {
+    trigram_t t = trigrams[k];
+    nb_entries += haystack->map[t].used;
+  }
+
+  // allocate sorting memory
+  entries = (trigram_entry_t*) malloc(nb_entries * sizeof(trigram_entry_t));
+  assert(entries != NULL);
+
+  // copy data for sorting
+  entry_ptr = entries;
+  for (int k = 0; k < nb_trigrams; ++k) {
+    trigram_t t       = trigrams[k];
+    size_t    buckets = haystack->map[t].used;
+
+    memcpy(entry_ptr, haystack->map[t].entries, buckets * sizeof(trigram_entry_t));
+    entry_ptr += buckets;
+  }
+
+  // sort data
+  qsort(entries, nb_entries, sizeof(trigram_entry_t), &compare_entries);
+
+  // count distinct matches
+  uint32_t last_reference = (uint32_t)-1;
+  entry_ptr = entries;
+  for (int k = 0; k < nb_entries; ++k) {
+    if (entry_ptr->reference != last_reference) {
+      last_reference = entry_ptr->reference;
+      ++nb_matches;
+    }
+    ++entry_ptr;    
+  }
+
+  // allocate maches result
+  matches = (trigram_match_t*) calloc(nb_matches, sizeof(trigram_match_t));
+  assert(matches != NULL);
+
+  // reduction, counting matches per reference
+  entry_ptr = entries;
+  match_ptr = matches;
+  match_ptr->reference = entry_ptr->reference; // setup the first match to
+  match_ptr->weight    = entry_ptr->weight;    // simplify the loop
+  for (int k = 0; k < nb_entries; ++k) {
+    if (entry_ptr->reference != match_ptr->reference) {
+      ++match_ptr;
+      match_ptr->reference = entry_ptr->reference;
+      match_ptr->weight    = entry_ptr->weight;
+      match_ptr->matches   = 1;
+    } else {
+      match_ptr->matches  += 1;
+    }
+    ++entry_ptr;    
+  }
+
+
+  // sort by weight (qsort)
+  qsort(matches, nb_matches, sizeof(trigram_match_t), &compare_matches);
+
+
+  free(entries);
+  free(matches);
+  free(trigrams);
   return 0;
 }

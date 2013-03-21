@@ -70,6 +70,23 @@ static VALUE blurrily_save(VALUE self, VALUE rb_path) {
 
 /******************************************************************************/
 
+static VALUE blurrily_find(VALUE self, VALUE rb_needle) {
+  trigram_map  haystack  = (trigram_map)NULL;
+  int          res       = -1;
+  VALUE        wrapper   = (VALUE)NULL;
+  const char*  needle    = StringValuePtr(rb_needle);
+
+  wrapper = rb_ivar_get(self, rb_intern("@wrapper"));
+  Data_Get_Struct(wrapper, struct trigram_map_t, haystack);
+
+  res = blurrily_storage_find(haystack, needle, 10, NULL);
+  assert(res >= 0);
+
+  return Qnil;
+}
+
+/******************************************************************************/
+
 void Init_blurrily(void) {
   /* assume we haven't yet defined blurrily */
   VALUE module = rb_define_module("Blurrily");
@@ -84,5 +101,6 @@ void Init_blurrily(void) {
   rb_define_method(klass, "initialize", blurrily_initialize, 0);
   rb_define_method(klass, "put",        blurrily_put,        3);
   rb_define_method(klass, "save",       blurrily_save,       1);
+  rb_define_method(klass, "find",       blurrily_find,       1);
   return;
 }
