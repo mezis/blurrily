@@ -16,6 +16,7 @@ struct trigram_match_t {
   uint32_t matches;
   uint32_t weight;
 };
+typedef struct trigram_match_t trigram_match_t;
 typedef struct trigram_match_t* trigram_match;
 
 

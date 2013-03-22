@@ -43,10 +43,6 @@ struct trigram_entries_t
 typedef struct trigram_entries_t trigram_entries_t;
 
 
-// match structure (see header)
-typedef struct trigram_match_t trigram_match_t;
-
-
 // hash map of all possible trigrams to collection of entries
 // there are 28^3 = 19,683 possible trigrams
 struct trigram_map_t
@@ -95,9 +91,10 @@ static int compare_matches(const void* left_p, const void* right_p)
 {
   trigram_match_t* left  = (trigram_match_t*)left_p;
   trigram_match_t* right = (trigram_match_t*)right_p;
-  int delta = left->matches - right->matches;
+  // int delta = (int)left->matches - (int)right->matches;
+  int delta = (int)right->matches - (int)left->matches;
 
-  return (delta != 0) ? delta : (right->weight - left->weight);
+  return (delta != 0) ? delta : ((int)left->weight - (int)right->weight);
 
 }
 
@@ -311,7 +308,6 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
     map->used++;
     map->dirty = 1;
     haystack->total_entries++;
-    LOG("- total %d entries\n", haystack->total_entries);
   }
 
   free((void*)trigrams);
@@ -331,9 +327,13 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   size_t           nb_matches  = 0;
   trigram_match_t* matches     = NULL;
   trigram_match_t* match_ptr   = NULL;
+  uint32_t         last_ref    = (uint32_t)-1;
+  int              nb_results  = -1;
 
   trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
+
+  LOG("%d trigrams in '%s'\n", nb_trigrams, needle);
 
   // measure size required for sorting
   for (int k = 0; k < nb_trigrams; ++k) {
@@ -344,6 +344,7 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   // allocate sorting memory
   entries = (trigram_entry_t*) malloc(nb_entries * sizeof(trigram_entry_t));
   assert(entries != NULL);
+  LOG("allocated space for %zd trigrams entries\n", nb_entries);
 
   // copy data for sorting
   entry_ptr = entries;
@@ -358,17 +359,18 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
 
   // sort data
   mergesort(entries, nb_entries, sizeof(trigram_entry_t), &compare_entries);
+  LOG("sorting entries\n");
 
   // count distinct matches
-  uint32_t last_reference = (uint32_t)-1;
   entry_ptr = entries;
   for (int k = 0; k < nb_entries; ++k) {
-    if (entry_ptr->reference != last_reference) {
-      last_reference = entry_ptr->reference;
+    if (entry_ptr->reference != last_ref) {
+      last_ref = entry_ptr->reference;
       ++nb_matches;
     }
     ++entry_ptr;    
   }
+  LOG("total %zd distinct matches\n", nb_matches);
 
   // allocate maches result
   matches = (trigram_match_t*) calloc(nb_matches, sizeof(trigram_match_t));
@@ -391,13 +393,18 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
     ++entry_ptr;    
   }
 
-
   // sort by weight (qsort)
   qsort(matches, nb_matches, sizeof(trigram_match_t), &compare_matches);
 
+  // output results
+  nb_results = (limit < nb_matches) ? limit : nb_matches;
+  for (int k = 0; k < nb_results; ++k) {
+    results[k] = matches[k];
+    LOG("match %d: reference %d, matchiness %d, weight %d\n", k, matches[k].reference, matches[k].matches, matches[k].weight);
+  }
 
   free(entries);
   free(matches);
   free(trigrams);
-  return 0;
+  return nb_results;
 }
