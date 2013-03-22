@@ -5,7 +5,14 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <limits.h>
+
+#ifdef PLATFORM_LINUX
+  #include <linux/limits.h>
+  #define MERGESORT qsort
+#else
+  #include <limits.h>
+  #define MERGESORT mergesort
+#endif
 
 #include "storage.h"
 
