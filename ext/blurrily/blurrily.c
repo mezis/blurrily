@@ -29,6 +29,22 @@ static VALUE blurrily_new(VALUE class) {
 
 /******************************************************************************/
 
+static VALUE blurrily_load(VALUE class, VALUE rb_path) {
+  char*       path     = StringValuePtr(rb_path);
+  VALUE       wrapper  = Qnil;
+  trigram_map haystack = (trigram_map)NULL;
+  int         res      = -1;
+
+  res = blurrily_storage_load(&haystack, path);
+  assert(res >= 0);
+
+  wrapper = Data_Wrap_Struct(class, 0, blurrily_free, (void*)haystack);
+  rb_obj_call_init(wrapper, 0, NULL);
+  return wrapper;
+}
+
+/******************************************************************************/
+
 static VALUE blurrily_initialize(VALUE self) {
   return Qtrue;
 }
@@ -97,9 +113,6 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
 
 /******************************************************************************/
 
-
-/******************************************************************************/
-
 void Init_blurrily(void) {
   /* assume we haven't yet defined blurrily */
   VALUE module = rb_define_module("Blurrily");
@@ -108,7 +121,8 @@ void Init_blurrily(void) {
   VALUE klass = rb_define_class_under(module, "Map", rb_cObject);
   assert(klass != Qnil);
 
-  rb_define_singleton_method(klass, "new", blurrily_new, 0);
+  rb_define_singleton_method(klass, "new",  blurrily_new,  0);
+  rb_define_singleton_method(klass, "load", blurrily_load, 1);
 
   rb_define_method(klass, "initialize", blurrily_initialize, 0);
   rb_define_method(klass, "put",        blurrily_put,        3);
