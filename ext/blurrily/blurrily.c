@@ -4,11 +4,7 @@
 
 /******************************************************************************/
 
-static VALUE cWrapper = Qnil;
-
-/******************************************************************************/
-
-static void blurrily_free_map(void* haystack)
+static void blurrily_free(void* haystack)
 {
   int res = -1;
 
@@ -18,17 +14,22 @@ static void blurrily_free_map(void* haystack)
 
 /******************************************************************************/
 
-static VALUE blurrily_initialize(VALUE self) {
+static VALUE blurrily_new(VALUE class) {
+  VALUE       wrapper  = Qnil;
   trigram_map haystack = (trigram_map)NULL;
   int         res      = -1;
-  VALUE       wrapper  = Qnil;
 
   res = blurrily_storage_new(&haystack);
   assert(res >= 0);
 
-  wrapper = Data_Wrap_Struct(cWrapper, 0, blurrily_free_map, (void*)haystack);
-  rb_ivar_set(self, rb_intern("@wrapper"), wrapper);
+  wrapper = Data_Wrap_Struct(class, 0, blurrily_free, (void*)haystack);
+  rb_obj_call_init(wrapper, 0, NULL);
+  return wrapper;
+}
 
+/******************************************************************************/
+
+static VALUE blurrily_initialize(VALUE self) {
   return Qtrue;
 }
 
@@ -37,13 +38,11 @@ static VALUE blurrily_initialize(VALUE self) {
 static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE rb_weight) {
   trigram_map  haystack  = (trigram_map)NULL;
   int          res       = -1;
-  VALUE        wrapper   = Qnil;
   char*        needle    = StringValuePtr(rb_needle);
   uint32_t     reference = NUM2UINT(rb_reference);
   uint32_t     weight    = NUM2UINT(rb_weight);
 
-  wrapper = rb_ivar_get(self, rb_intern("@wrapper"));
-  Data_Get_Struct(wrapper, struct trigram_map_t, haystack);
+  Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_put(haystack, needle, reference, weight);
   assert(res >= 0);
@@ -56,11 +55,9 @@ static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE
 static VALUE blurrily_save(VALUE self, VALUE rb_path) {
   trigram_map  haystack  = (trigram_map)NULL;
   int          res       = -1;
-  VALUE        wrapper   = Qnil;
   const char*  path      = StringValuePtr(rb_path);
 
-  wrapper = rb_ivar_get(self, rb_intern("@wrapper"));
-  Data_Get_Struct(wrapper, struct trigram_map_t, haystack);
+  Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_save(haystack, path);
   assert(res >= 0);
@@ -73,7 +70,6 @@ static VALUE blurrily_save(VALUE self, VALUE rb_path) {
 static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
   trigram_map   haystack   = (trigram_map)NULL;
   int           res        = -1;
-  VALUE         wrapper    = Qnil;
   const char*   needle     = StringValuePtr(rb_needle);
   int           limit      = NUM2UINT(rb_limit);
   trigram_match matches    = NULL;
@@ -82,8 +78,7 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
   if (limit <= 0) { limit = 10 ; }
   matches = (trigram_match) malloc(limit * sizeof(trigram_match_t));
 
-  wrapper = rb_ivar_get(self, rb_intern("@wrapper"));
-  Data_Get_Struct(wrapper, struct trigram_map_t, haystack);
+  Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_find(haystack, needle, limit, matches);
   assert(res >= 0);
@@ -102,6 +97,9 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
 
 /******************************************************************************/
 
+
+/******************************************************************************/
+
 void Init_blurrily(void) {
   /* assume we haven't yet defined blurrily */
   VALUE module = rb_define_module("Blurrily");
@@ -110,8 +108,7 @@ void Init_blurrily(void) {
   VALUE klass = rb_define_class_under(module, "Map", rb_cObject);
   assert(klass != Qnil);
 
-  cWrapper = rb_define_class_under(module, "Wrapper", rb_cObject);
-  assert(cWrapper != Qnil);
+  rb_define_singleton_method(klass, "new", blurrily_new, 0);
 
   rb_define_method(klass, "initialize", blurrily_initialize, 0);
   rb_define_method(klass, "put",        blurrily_put,        3);
