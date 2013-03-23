@@ -1,4 +1,4 @@
-require "blurrily/blurrily"
+require "blurrily/map"
 require "blurrily/string"
 require "blurrily/version"
 

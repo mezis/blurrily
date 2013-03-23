@@ -2,7 +2,7 @@ require "bundler/gem_tasks"
 require 'rake/extensiontask'
 
 Rake::ExtensionTask.new('blurrily') do |ext|
-  # ext.name = 'hello_world'                # indicate the name of the extension.
+  ext.name = 'map'                # indicate the name of the extension.
   # ext.ext_dir = 'ext/weird_world'         # search for 'hello_world' inside it.
   ext.lib_dir = 'lib/blurrily'              # put binaries into this folder.
   # ext.config_script = 'custom_extconf.rb' # use instead of the default 'extconf.rb'.
