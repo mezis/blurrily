@@ -114,7 +114,7 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
 
 /******************************************************************************/
 
-void Init_blurrily(void) {
+void Init_map(void) {
   /* assume we haven't yet defined blurrily */
   VALUE module = rb_define_module("Blurrily");
   assert(module != Qnil);
