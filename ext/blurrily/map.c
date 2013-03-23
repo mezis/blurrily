@@ -69,6 +69,21 @@ static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE
 
 /******************************************************************************/
 
+static VALUE blurrily_delete(VALUE self, VALUE rb_reference) {
+  trigram_map  haystack  = (trigram_map)NULL;
+  uint32_t     reference = NUM2UINT(rb_reference);
+  int          res       = -1;
+
+  Data_Get_Struct(self, struct trigram_map_t, haystack);
+
+  res = blurrily_storage_delete(haystack, reference);
+  assert(res >= 0);
+
+  return INT2NUM(res);
+}
+
+/******************************************************************************/
+
 static VALUE blurrily_save(VALUE self, VALUE rb_path) {
   trigram_map  haystack  = (trigram_map)NULL;
   int          res       = -1;
@@ -127,6 +142,7 @@ void Init_map(void) {
 
   rb_define_method(klass, "initialize", blurrily_initialize, 0);
   rb_define_method(klass, "put",        blurrily_put,        3);
+  rb_define_method(klass, "delete",     blurrily_delete,     1);
   rb_define_method(klass, "save",       blurrily_save,       1);
   rb_define_method(klass, "find",       blurrily_find,       2);
   return;
