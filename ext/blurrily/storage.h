@@ -7,11 +7,12 @@
 */
 #include <inttypes.h>
 #include "tokeniser.h"
+#include "blurrily.h"
 
 struct trigram_map_t;
 typedef struct trigram_map_t* trigram_map;
 
-struct trigram_match_t {
+struct PACKED_STRUCT trigram_match_t {
   uint32_t reference;
   uint32_t matches;
   uint32_t weight;

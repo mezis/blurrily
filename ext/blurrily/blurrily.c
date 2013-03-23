@@ -1,6 +1,7 @@
 #include <ruby.h>
 #include <assert.h>
 #include "storage.h"
+#include "blurrily.h"
 
 /******************************************************************************/
 
@@ -45,7 +46,7 @@ static VALUE blurrily_load(VALUE class, VALUE rb_path) {
 
 /******************************************************************************/
 
-static VALUE blurrily_initialize(VALUE self) {
+static VALUE blurrily_initialize(VALUE UNUSED(self)) {
   return Qtrue;
 }
 

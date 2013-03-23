@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #ifdef PLATFORM_LINUX
   #include <linux/limits.h>
@@ -12,6 +13,11 @@
 #else
   #include <limits.h>
   #define MERGESORT mergesort
+#endif
+
+#ifndef PATH_MAX
+  /* safe default ... */
+  #define PATH_MAX 1024
 #endif
 
 #include "storage.h"
@@ -27,7 +33,7 @@
 /******************************************************************************/
 
 // one trigram entry -- client reference and sorting weight
-struct trigram_entry_t
+struct PACKED_STRUCT trigram_entry_t
 {
   uint32_t reference;
   uint32_t weight;
@@ -38,11 +44,13 @@ typedef struct trigram_entry_t trigram_entry_t;
 // collection of entries for a given trigram
 // <entries> points to an array of <buckets> entries
 // of which <used> are filled
-struct trigram_entries_t
+struct PACKED_STRUCT trigram_entries_t
 {
   uint32_t         buckets;
   uint32_t         used;
+
   uint8_t          dirty;           // not optimised (presorted) yet
+  uint8_t          _padding_[7];
 
   trigram_entry_t* entries;         // set when the structure is in memory
   size_t           entries_offset;  // set when the structure is on disk
@@ -52,14 +60,15 @@ typedef struct trigram_entries_t trigram_entries_t;
 
 // hash map of all possible trigrams to collection of entries
 // there are 28^3 = 19,683 possible trigrams
-struct trigram_map_t
+struct PACKED_STRUCT trigram_map_t
 {
-  char              magic[6]; // the string "trigra"
+  char              magic[6];           // the string "trigra"
   uint8_t           big_endian;
   uint8_t           pointer_size;
 
   uint32_t          total_entries;
-  uint32_t          mapped_size;
+  uint32_t          mapped_size;        // when mapped from disk, the number of bytes mapped
+  int               mapped_fd;          // when mapped from disk, the file descriptor
   
   trigram_entries_t map[TRIGRAM_COUNT]; // this whole structure is ~500KB
 };
@@ -119,6 +128,19 @@ static void sort_map_if_dirty(trigram_entries_t* map)
 
 /******************************************************************************/
 
+static size_t round_to_page(size_t value)
+{
+  if (value % PAGE_SIZE == 0) return value;
+  return (value / PAGE_SIZE + 1) * PAGE_SIZE;
+}
+
+static size_t get_map_size(trigram_map haystack, int index)
+{
+  return haystack->map[index].buckets * sizeof(trigram_entry_t);
+}
+
+/******************************************************************************/
+
 int blurrily_storage_new(trigram_map* haystack_ptr)
 {
   trigram_map         haystack = (trigram_map)NULL;
@@ -135,6 +157,7 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
   haystack->pointer_size = get_pointer_size();
 
   haystack->mapped_size = 0; // not mapped, as we just created it in memory
+  haystack->mapped_fd   = 0;
   haystack->total_entries = 0;
   for(k = 0, ptr = haystack->map ; k < TRIGRAM_COUNT ; ++k, ++ptr) {
     ptr->buckets = 0;
@@ -151,7 +174,38 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
 
 int blurrily_storage_load(trigram_map* haystack, const char* path)
 {
-  return blurrily_storage_new(haystack);
+  int         fd          = -1;
+  int         res         = -1;
+  trigram_map header      = NULL;
+  uint8_t*    origin      = NULL;
+  struct stat metadata;
+
+  // open and map file
+  fd = open(path, O_RDONLY);
+  assert(fd >= 0);
+
+  res = fstat(fd, &metadata);
+  assert(res >= 0);
+
+  header = (trigram_map) mmap(NULL, metadata.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+  assert(header != NULL);
+
+  // check magic
+  // TODO
+
+  // fix header data
+  header->mapped_size = metadata.st_size;
+  header->mapped_fd   = fd;
+  origin = (uint8_t*)header;
+  for (int k = 0; k < TRIGRAM_COUNT; ++k) {
+    trigram_entries_t* map = header->map + k;
+    if (map->entries_offset == 0) continue;
+    map->entries = (trigram_entry_t*) (origin + map->entries_offset);
+    map->entries_offset = 0;
+  }
+  *haystack = header;
+
+  return 0;
 }
 
 /******************************************************************************/
@@ -164,9 +218,13 @@ int blurrily_storage_close(trigram_map* haystack_ptr)
   fprintf(stderr, "blurrily_storage_close\n");
 
   if (haystack->mapped_size) {
+    int fd = haystack->mapped_fd;
+
     res = munmap(haystack, haystack->mapped_size);
     assert(res >= 0);
 
+    res = close(fd);
+    assert(res >= 0);
   } else {
     trigram_entries_t*  ptr = haystack->map;
     for(int k = 0 ; k < TRIGRAM_COUNT ; ++k) {
@@ -182,28 +240,15 @@ int blurrily_storage_close(trigram_map* haystack_ptr)
 
 /******************************************************************************/
 
-static size_t round_to_page(size_t value)
-{
-  if (value % PAGE_SIZE == 0) return value;
-  return (value / PAGE_SIZE + 1) * PAGE_SIZE;
-}
-
-static size_t get_map_size(trigram_map haystack, int index)
-{
-  return haystack->map[index].buckets * sizeof(trigram_entry_t);
-}
-
-/******************************************************************************/
-
 int blurrily_storage_save(trigram_map haystack, const char* path)
 {
-  int     fd          = -1;
-  int     res         = -1;
-  void*   ptr         = (void*)NULL;
-  size_t  total_size  = 0;
-  size_t  offset      = 0;
-  trigram_map header  = NULL;
-  char    path_tmp[PATH_MAX];
+  int         fd          = -1;
+  int         res         = -1;
+  uint8_t*    ptr         = (uint8_t*)NULL;
+  size_t      total_size  = 0;
+  size_t      offset      = 0;
+  trigram_map header      = NULL;
+  char        path_tmp[PATH_MAX];
 
   // path for temporary file
   snprintf(path_tmp, PATH_MAX, "%s.tmp", path);
@@ -288,12 +333,9 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
     // allocate more space as needed (exponential growth)
     if (map->buckets == 0) {
       LOG("- alloc for %d\n", t);
-      size_t bytes = -1;
 
       map->buckets = TRIGRAM_ENTRIES_START_SIZE;
-      bytes        = map->buckets * sizeof(trigram_entry_t);
-      map->entries = (trigram_entry_t*) malloc(bytes);
-      memset(map->entries, 0x00, bytes);
+      map->entries = (trigram_entry_t*) calloc(map->buckets, sizeof(trigram_entry_t));
     }
     if (map->used == map->buckets) {
       LOG("- realloc for %d\n", t);
@@ -328,10 +370,10 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   int              nb_trigrams = -1;
   int              length      = strlen(needle);
   trigram_t*       trigrams    = (trigram_t*)NULL;
-  size_t           nb_entries  = 0;
+  int              nb_entries  = 0;
   trigram_entry_t* entries     = NULL;
   trigram_entry_t* entry_ptr   = NULL;
-  size_t           nb_matches  = 0;
+  int              nb_matches  = 0;
   trigram_match_t* matches     = NULL;
   trigram_match_t* match_ptr   = NULL;
   uint32_t         last_ref    = (uint32_t)-1;

@@ -4,6 +4,7 @@
 #include <math.h>
 #include "tokeniser.h"
 #include "log.h"
+#include "blurrily.h"
 
 
 /******************************************************************************/
@@ -120,7 +121,7 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
 
 /******************************************************************************/
 
-int blurrily_tokeniser_trigram(trigram_t input, char* output)
+int blurrily_tokeniser_trigram(trigram_t UNUSED(input), char* UNUSED(output))
 {
   return 0;
 }
