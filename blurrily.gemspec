@@ -13,6 +13,8 @@ Gem::Specification.new do |gem|
   gem.homepage      = "http://github.com/mezis/blurrily"
 
   gem.add_dependency 'activesupport'
+  gem.add_dependency 'eventmachine'
+  gem.add_dependency 'json'
 
   gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rake-compiler'
