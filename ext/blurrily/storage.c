@@ -372,9 +372,9 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
       map->entries = (trigram_entry_t*) calloc(map->buckets, sizeof(trigram_entry_t));
     }
     if (map->used == map->buckets) {
-      LOG("- realloc for %d\n", t);
       uint32_t new_buckets = map->buckets * 4/3;
       trigram_entry_t* new_entries = NULL;
+      LOG("- realloc for %d\n", t);
 
       /* copy old data, free old pointer, zero extra space */
       new_entries = malloc(new_buckets * sizeof(trigram_entry_t));
