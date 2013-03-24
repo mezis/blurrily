@@ -151,11 +151,14 @@ static VALUE blurrily_stats(VALUE self)
 /******************************************************************************/
 
 void Init_map_ext(void) {
+  VALUE module = Qnil;
+  VALUE klass  = Qnil;
+
   /* assume we haven't yet defined blurrily */
-  VALUE module = rb_define_module("Blurrily");
+  module = rb_define_module("Blurrily");
   assert(module != Qnil);
 
-  VALUE klass = rb_define_class_under(module, "Map", rb_cObject);
+  klass = rb_define_class_under(module, "Map", rb_cObject);
   assert(klass != Qnil);
 
   rb_define_singleton_method(klass, "new",  blurrily_new,  0);
