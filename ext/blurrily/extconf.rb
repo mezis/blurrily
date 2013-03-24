@@ -6,6 +6,6 @@ SHARED_FLAGS = "-DPLATFORM_#{`uname`.strip.upcase} --std=c99 -Wall -Wextra -Werr
 $CFLAGS += " #{SHARED_FLAGS} -O3 -fno-fast-math"
 
 # development
-# $CFLAGS += " #{SHARED_FLAGS} -DNDEBUG -O0 -g"
+# $CFLAGS += " #{SHARED_FLAGS} -O0 -g"
 
 create_makefile('blurrily/map_ext')
