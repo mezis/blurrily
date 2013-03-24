@@ -154,15 +154,15 @@ describe Blurrily::Map do
 
     let(:wordsize_byte) do
       case RUBY_PLATFORM
-      when /x86_64/   then "\u0008"
-      when /i[345]86/ then "\u0004"
+      when /x86_64/    then "\u0008"
+      when /i[3-6]86/  then "\u0004"
       else raise 'unknown platform'
       end
     end
 
     let(:big_endian_byte) do
       case RUBY_PLATFORM
-      when /x86|i[345]86/ then "\u0001"
+      when /x86|i[3-6]86/ then "\u0001"
       when /ppc|arm/      then "\u0002"
       else raise 'unknown platform'
       end

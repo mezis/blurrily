@@ -9,7 +9,7 @@
 
 #ifdef PLATFORM_LINUX
   #include <linux/limits.h>
-  #define MERGESORT qsort
+  #define MERGESORT fake_mergesort
 #else
   #include <limits.h>
   #define MERGESORT mergesort
@@ -76,6 +76,18 @@ typedef struct trigram_map_t trigram_map_t;
 
 /******************************************************************************/
 
+#ifdef PLATFORM_LINUX
+// fake version of mergesort(3) implemented with qsort(3) as Linux lacks
+// the specific variants
+static int fake_mergesort(void *base, size_t nel, size_t width, int (*compar)(const void *, const void *))
+{
+  qsort(base, nel, width, compar);
+  return 0;
+}
+#endif
+
+/******************************************************************************/
+
 // 1 -> little endian, 2 -> big endian
 static uint8_t get_big_endian()
 {
@@ -121,7 +133,7 @@ static void sort_map_if_dirty(trigram_entries_t* map)
   int res = -1;
   if (! map->dirty) return;
 
-  res = mergesort(map->entries, map->used, sizeof(trigram_entry_t), &compare_entries);
+  res = MERGESORT(map->entries, map->used, sizeof(trigram_entry_t), &compare_entries);
   assert(res >= 0);
   map->dirty = 0;
 }
@@ -434,7 +446,7 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   assert(entry_ptr == entries + nb_entries);
 
   // sort data
-  mergesort(entries, nb_entries, sizeof(trigram_entry_t), &compare_entries);
+  MERGESORT(entries, nb_entries, sizeof(trigram_entry_t), &compare_entries);
   LOG("sorting entries\n");
 
   // count distinct matches
