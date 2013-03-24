@@ -61,6 +61,32 @@ int blurrily_storage_save(trigram_map haystack, const char* path);
 int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t reference, uint32_t weight);
 
 /*
+  Check the map for an existing <reference>.
+
+  Returns < 0 on error, 0 if the reference is not found, the number of trigrams
+  for that reference otherwise.
+
+  If <weight> is not NULL, will be set to the weight value passed to the put
+  method on return (is the reference is found).
+
+  If <trigrams> is not NULL, it should point an array <nb_trigrams> long,
+  and up to <nb_trigrams> will be copied into it matching the <needle>
+  originally passed to the put method.
+
+  Not that this is a O(n) method: the whole map will be read.
+*/
+// int blurrily_storage_get(trigram_map haystack, uint32_t reference, uint32_t* weight, int nb_trigrams, trigram_t* trigrams);
+
+/*
+  Remove a <reference> from the map.
+
+  Note that this is very innefective.
+
+  Returns positive on success, negative on failure.
+*/
+int blurrily_storage_delete(trigram_map haystack, uint32_t reference);
+
+/*
   Return at most <limit> entries matching <needle> from the <haystack>.
 
   Results are written to <results>. The first results are the ones entries

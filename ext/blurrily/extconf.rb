@@ -8,4 +8,4 @@ $CFLAGS += " #{SHARED_FLAGS} -O3 -fno-fast-math"
 # development
 # $CFLAGS += " #{SHARED_FLAGS} -DNDEBUG -O0 -g"
 
-create_makefile('blurrily/map')
+create_makefile('blurrily/map_ext')

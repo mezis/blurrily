@@ -1,6 +1,3 @@
+require "blurrily/map_ext"
 require "blurrily/map"
-require "blurrily/string"
 require "blurrily/version"
-
-module Blurrily
-end

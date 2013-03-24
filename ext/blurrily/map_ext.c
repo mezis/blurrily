@@ -150,7 +150,7 @@ static VALUE blurrily_stats(VALUE self)
 
 /******************************************************************************/
 
-void Init_map(void) {
+void Init_map_ext(void) {
   /* assume we haven't yet defined blurrily */
   VALUE module = rb_define_module("Blurrily");
   assert(module != Qnil);
