@@ -37,7 +37,7 @@ describe Blurrily::Map do
     it 'accepts non-letter characters' do
       subject.put '@€%é', 123, 0
       references.should == 1
-      trigrams.should   == 1
+      trigrams.should   == 2
     end
   end
 
