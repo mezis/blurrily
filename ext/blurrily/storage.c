@@ -77,13 +77,13 @@ typedef struct trigram_map_t trigram_map_t;
 
 /******************************************************************************/
 
-// 1 if big endian 0 otherwise
+// 1 -> little endian, 2 -> big endian
 static uint8_t get_big_endian()
 {
   uint32_t magic = 0xAA0000BB;
   uint8_t  head  = *((uint8_t*) &magic);
 
-  return (head == 0xBB) ? 1 : 0;
+  return (head == 0xBB) ? 1 : 2;
 }
 
 /******************************************************************************/
@@ -252,6 +252,11 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   trigram_map header      = NULL;
   char        path_tmp[PATH_MAX];
 
+  // cleanup maps in memory
+  for (int k = 0; k < TRIGRAM_COUNT; ++k) {
+    sort_map_if_dirty(haystack->map + k);
+  }
+
   // path for temporary file
   snprintf(path_tmp, PATH_MAX, "%s.tmp", path);
 
@@ -283,7 +288,6 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   // copy each map, set offset in header
   for (int k = 0; k < TRIGRAM_COUNT; ++k) {
     size_t block_size = get_map_size(haystack, k);
-    sort_map_if_dirty(haystack->map + k);
 
     if (block_size > 0) {
       memcpy(ptr+offset, haystack->map[k].entries, block_size);
@@ -297,6 +301,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
       header->map[k].entries_offset = 0;
     }
   }
+  assert(offset == total_size);
 
   res = munmap(ptr, total_size);
   assert(res >= 0);

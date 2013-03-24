@@ -139,15 +139,58 @@ describe Blurrily::Map do
 
 
   describe '#save' do
+    let(:path) { Pathname.new('map.test') }
+    
+    def perform
+      subject.save path.to_s
+    end
+
+    let(:wordsize_byte) do
+      case RUBY_PLATFORM
+      when /x86_64/   then "\u0008"
+      when /i[345]86/ then "\u0004"
+      else raise 'unknown platform'
+      end
+    end
+
+    let(:big_endian_byte) do
+      case RUBY_PLATFORM
+      when /x86|i[345]86/ then "\u0001"
+      when /ppc|arm/      then "\u0002"
+      else raise 'unknown platform'
+      end
+    end
+
     before do
+      path.delete if path.exist?
+
+      subject.put 'london',  10, 0
+      subject.put 'paris',   11, 0
+      subject.put 'monaco',  12, 0
+    end
+
+    after do
       path.delete if path.exist?
     end
 
-    let(:path) { Pathname.new('map.test') }
+    it 'creates a file on disk' do
+      perform
+      path.should exist
+    end
 
-    it 'creates a file on disk'
-    it 'uses a magic header'
-    it 'is idempotent'
+    it 'uses a magic header' do
+      perform
+      header = path.read(8)
+      header[0,6].should == "trigra"
+      header[6].should == big_endian_byte
+      header[7].should == wordsize_byte
+    end
+
+    it 'is idempotent' do
+      hashes = (1..3).map { perform ; path.md5sum }
+      hashes[0].should == hashes[1]
+      hashes[0].should == hashes[2]
+    end
   end
 
 
