@@ -65,17 +65,17 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
 
   snprintf(normalized, length+4, "**%s*", input);
 
-  // replace spaces with '*'
+  /* replace spaces with '*' */
   for (int k = 0; k < length+3; ++k) {
     if (normalized[k] == ' ') normalized[k] = '*';
   }
 
-  // compute trigrams
+  /* compute trigrams */
   for (int k = 0; k <= length; ++k) {
     string_to_code(normalized+k, output+k);
   }
 
-  // print results
+  /* print results */
   LOG("-- normalization\n");
   LOG("%s -> %s\n", input, normalized);
   LOG("-- tokenisation\n");
@@ -90,10 +90,10 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
     );
   }
 
-  // sort
+  /* sort */
   qsort((void*)output, length+1, sizeof(trigram_t), &blurrily_compare_trigrams);
 
-  // remove duplicates
+  /* remove duplicates */
   for (int k = 1; k <= length; ++k) {
     trigram_t* previous = output + k - 1;
     trigram_t* current  = output + k;
@@ -104,10 +104,10 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
     }
   }
 
-  // compact
+  /* compact */
   qsort((void*)output, length+1, sizeof(trigram_t), &blurrily_compare_trigrams);
 
-  // print again
+  /* print again */
   LOG("-- after sort/compact\n");
   for (int k = 0; k <= length-duplicates; ++k) {
     char res[4];

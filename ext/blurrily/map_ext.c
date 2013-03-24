@@ -115,7 +115,7 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
   res = blurrily_storage_find(haystack, needle, limit, matches);
   assert(res >= 0);
 
-  // wrap the matches into a Ruby array
+  /* wrap the matches into a Ruby array */
   rb_matches = rb_ary_new();
   for (int k = 0; k < res; ++k) {
     VALUE rb_match = rb_ary_new();
