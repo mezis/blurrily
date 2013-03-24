@@ -20,6 +20,12 @@ struct PACKED_STRUCT trigram_match_t {
 typedef struct trigram_match_t trigram_match_t;
 typedef struct trigram_match_t* trigram_match;
 
+typedef struct trigram_stat_t {
+  uint32_t references;
+  uint32_t trigrams;
+
+} trigram_stat_t;
+
 
 /* 
   Create a new trigram map, resident in memory.
@@ -67,3 +73,11 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
   Returns number of matches on success, negative on failure.
 */
 int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t limit, trigram_match results);
+
+/*
+  Copies metadata into <stats>
+
+  Returns positive on success, negative on failure.
+*/
+int blurrily_storage_stats(trigram_map haystack, trigram_stat_t* stats);
+

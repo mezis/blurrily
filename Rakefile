@@ -1,5 +1,8 @@
 require "bundler/gem_tasks"
 require 'rake/extensiontask'
+require 'rspec/core/rake_task'
+require 'appraisal'
+
 
 Rake::ExtensionTask.new('blurrily') do |ext|
   ext.name = 'map'                # indicate the name of the extension.
@@ -12,3 +15,7 @@ Rake::ExtensionTask.new('blurrily') do |ext|
   # ext.gem_spec = spec                     # optionally indicate which gem specification
   #                                         # will be used.
 end
+
+RSpec::Core::RakeTask.new(:spec)
+
+task :default => [:compile, :spec]

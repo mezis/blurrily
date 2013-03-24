@@ -24,7 +24,7 @@ static void string_to_code(const char* input, trigram_t *output)
   trigram_t result = 0;
 
   for (int k = 0 ; k < 3; ++k) {
-    if (input[k] == '*') continue;
+    if (input[k] == '*' || input[k] < 'a' || input[k] > 'z') continue;
     result += ipow(TRIGRAM_BASE, k) * (input[k] - 'a' + 1);
   }
 

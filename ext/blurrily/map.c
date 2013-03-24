@@ -127,6 +127,27 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
   return rb_matches;
 }
 
+
+/******************************************************************************/
+
+static VALUE blurrily_stats(VALUE self)
+{
+  trigram_map     haystack = (trigram_map)NULL;
+  trigram_stat_t  stats;
+  VALUE           result   = rb_hash_new();
+  int             res      = -1;
+
+  Data_Get_Struct(self, struct trigram_map_t, haystack);
+
+  res = blurrily_storage_stats(haystack, &stats);
+  assert(res >= 0);
+
+  (void) rb_hash_aset(result, ID2SYM(rb_intern("references")), UINT2NUM(stats.references));
+  (void) rb_hash_aset(result, ID2SYM(rb_intern("trigrams")),   UINT2NUM(stats.trigrams));
+
+  return result;
+}
+
 /******************************************************************************/
 
 void Init_map(void) {
@@ -145,5 +166,6 @@ void Init_map(void) {
   rb_define_method(klass, "delete",     blurrily_delete,     1);
   rb_define_method(klass, "save",       blurrily_save,       1);
   rb_define_method(klass, "find",       blurrily_find,       2);
+  rb_define_method(klass, "stats",      blurrily_stats,      0);
   return;
 }
