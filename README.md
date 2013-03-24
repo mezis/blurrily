@@ -1,5 +1,9 @@
 # Blurrily — Fast fuzzy text search
 
+[![Build Status](https://travis-ci.org/mezis/blurrily.png?branch=master)](https://travis-ci.org/mezis/blurrily)
+[![Dependency Status](https://gemnasium.com/mezis/blurrily.png)](https://gemnasium.com/mezis/blurrily)
+[![Code Climate](https://codeclimate.com/github/mezis/blurrily.png)](https://codeclimate.com/github/mezis/blurrily)
+
 This will be a C version of [fuzzily](http://github.com/mezis/fuzzily), a
 Ruby gem to perform fuzzy text searching.
 
