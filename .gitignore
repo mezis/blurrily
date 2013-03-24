@@ -11,3 +11,7 @@ Makefile
 # Data files
 *.bz2
 *.trigrams
+
+# CTags
+.tags
+.tags_sorted_by_file
