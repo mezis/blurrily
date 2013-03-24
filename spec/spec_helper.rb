@@ -12,4 +12,8 @@ Pathname.class_eval do
   def md5sum
     Digest::MD5.file(self.to_s)
   end
+
+  def delete_if_exists
+    delete if exist?
+  end
 end

@@ -81,6 +81,13 @@ describe Blurrily::Map do
       end
     end
 
+    context 'with an empty string' do
+      it 'returns no results' do
+        needle.replace ''
+        result.should be_empty
+      end
+    end
+
     context 'with a limit option' do
       let(:limit) { 2 }
       it 'returns fewer results' do
@@ -162,7 +169,7 @@ describe Blurrily::Map do
     end
 
     before do
-      path.delete if path.exist?
+      path.delete_if_exists
 
       subject.put 'london',  10, 0
       subject.put 'paris',   11, 0
@@ -170,7 +177,7 @@ describe Blurrily::Map do
     end
 
     after do
-      path.delete if path.exist?
+      path.delete_if_exists
     end
 
     it 'creates a file on disk' do
@@ -195,9 +202,38 @@ describe Blurrily::Map do
 
 
   describe '.load' do
-    it 'then saves to an identical file'
-    it 'creates a searchable map'
-    it 'raises an exception when the file does not exist'
+    subject { described_class.load path.to_s }
+    let(:path) { Pathname.new('map.test') }
+    let(:alt_path) { Pathname.new('map2.test') }
+
+    before do
+      path.delete_if_exists
+      Blurrily::Map.new.tap do |map|
+        map.put 'london',  10, 0
+        map.put 'paris',   11, 0
+        map.put 'monaco',  12, 0
+        map.save path.to_s
+      end
+    end
+
+    after do
+      path.delete_if_exists
+      alt_path.delete_if_exists
+    end
+
+    it 'results in a searchable map' do
+      subject.find('london').should_not be_empty
+    end
+
+    it 'then saves to an identical file' do
+      subject.save alt_path.to_s
+      path.md5sum.should == alt_path.md5sum
+    end
+
+    it 'raises an exception when the file does not exist' do
+      path.delete_if_exists
+      expect { subject }.to raise_exception
+    end
   end
 
 end

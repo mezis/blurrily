@@ -21,7 +21,7 @@ static VALUE blurrily_new(VALUE class) {
   int         res      = -1;
 
   res = blurrily_storage_new(&haystack);
-  assert(res >= 0);
+  if (res < 0) { rb_sys_fail(NULL); return Qnil; }
 
   wrapper = Data_Wrap_Struct(class, 0, blurrily_free, (void*)haystack);
   rb_obj_call_init(wrapper, 0, NULL);
@@ -37,7 +37,7 @@ static VALUE blurrily_load(VALUE class, VALUE rb_path) {
   int         res      = -1;
 
   res = blurrily_storage_load(&haystack, path);
-  assert(res >= 0);
+  if (res < 0) { rb_sys_fail(NULL); return Qnil; }
 
   wrapper = Data_Wrap_Struct(class, 0, blurrily_free, (void*)haystack);
   rb_obj_call_init(wrapper, 0, NULL);

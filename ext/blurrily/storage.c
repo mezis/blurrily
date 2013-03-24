@@ -49,11 +49,10 @@ struct PACKED_STRUCT trigram_entries_t
   uint32_t         buckets;
   uint32_t         used;
 
-  uint8_t          dirty;           // not optimised (presorted) yet
-  uint8_t          _padding_[7];
-
   trigram_entry_t* entries;         // set when the structure is in memory
   size_t           entries_offset;  // set when the structure is on disk
+
+  uint8_t          dirty;           // not optimised (presorted) yet
 };
 typedef struct trigram_entries_t trigram_entries_t;
 
@@ -135,9 +134,20 @@ static size_t round_to_page(size_t value)
   return (value / PAGE_SIZE + 1) * PAGE_SIZE;
 }
 
+/******************************************************************************/
+
 static size_t get_map_size(trigram_map haystack, int index)
 {
   return haystack->map[index].buckets * sizeof(trigram_entry_t);
+}
+
+/******************************************************************************/
+
+static void free_if(void* ptr)
+{
+  if (ptr == NULL) return;
+  free(ptr);
+  return;
 }
 
 /******************************************************************************/
@@ -150,6 +160,7 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
 
   LOG("blurrily_storage_new\n");
   haystack = (trigram_map) malloc(sizeof(trigram_map_t));
+  if (haystack == NULL) return -1;
 
   memset(haystack, 0x00, sizeof(trigram_map_t));
 
@@ -183,11 +194,11 @@ int blurrily_storage_load(trigram_map* haystack, const char* path)
   struct stat metadata;
 
   // open and map file
-  fd = open(path, O_RDONLY);
-  assert(fd >= 0);
+  res = fd = open(path, O_RDONLY);
+  if (res < 0) goto cleanup;
 
   res = fstat(fd, &metadata);
-  assert(res >= 0);
+  if (res < 0) goto cleanup;
 
   header = (trigram_map) mmap(NULL, metadata.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
   assert(header != NULL);
@@ -207,7 +218,8 @@ int blurrily_storage_load(trigram_map* haystack, const char* path)
   }
   *haystack = header;
 
-  return 0;
+cleanup:
+  return res;
 }
 
 /******************************************************************************/
@@ -280,10 +292,13 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   // flush data
   memset(ptr, 0x00, total_size);
 
-  // copy header
+  // copy header & clean copy
   memcpy(ptr, (void*)haystack, sizeof(trigram_map_t));
   offset += round_to_page(sizeof(trigram_map_t));
   header = (trigram_map)ptr;
+
+  header->mapped_size = 0;
+  header->mapped_fd   = 0;
 
   // copy each map, set offset in header
   for (int k = 0; k < TRIGRAM_COUNT; ++k) {
@@ -378,25 +393,28 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   int              nb_trigrams = -1;
   int              length      = strlen(needle);
   trigram_t*       trigrams    = (trigram_t*)NULL;
-  int              nb_entries  = 0;
+  int              nb_entries  = -1;
   trigram_entry_t* entries     = NULL;
   trigram_entry_t* entry_ptr   = NULL;
-  int              nb_matches  = 0;
+  int              nb_matches  = -1;
   trigram_match_t* matches     = NULL;
   trigram_match_t* match_ptr   = NULL;
   uint32_t         last_ref    = (uint32_t)-1;
-  int              nb_results  = -1;
+  int              nb_results  = 0;
 
   trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
+  if (nb_trigrams == 0) goto cleanup;
 
   LOG("%d trigrams in '%s'\n", nb_trigrams, needle);
 
   // measure size required for sorting
+  nb_entries = 0;
   for (int k = 0; k < nb_trigrams; ++k) {
     trigram_t t = trigrams[k];
     nb_entries += haystack->map[t].used;
   }
+  if (nb_entries == 0) goto cleanup;
 
   // allocate sorting memory
   entries = (trigram_entry_t*) malloc(nb_entries * sizeof(trigram_entry_t));
@@ -420,7 +438,9 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   LOG("sorting entries\n");
 
   // count distinct matches
-  entry_ptr = entries;
+  entry_ptr  = entries;
+  last_ref   = -1;
+  nb_matches = 0;
   for (int k = 0; k < nb_entries; ++k) {
     if (entry_ptr->reference != last_ref) {
       last_ref = entry_ptr->reference;
@@ -428,6 +448,7 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
     }
     ++entry_ptr;    
   }
+  assert(entry_ptr == entries + nb_entries);
   LOG("total %zd distinct matches\n", nb_matches);
 
   // allocate maches result
@@ -449,10 +470,11 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
     } else {
       match_ptr->matches  += 1;
     }
-    assert(match_ptr->matches <= nb_trigrams);
+    assert((int) match_ptr->matches <= nb_trigrams);
     ++entry_ptr;    
   }
-  assert(match_ptr == matches + nb_matches);
+  assert(match_ptr == matches + nb_matches - 1);
+  assert(entry_ptr == entries + nb_entries);
 
   // sort by weight (qsort)
   qsort(matches, nb_matches, sizeof(trigram_match_t), &compare_matches);
@@ -464,9 +486,10 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
     LOG("match %d: reference %d, matchiness %d, weight %d\n", k, matches[k].reference, matches[k].matches, matches[k].weight);
   }
 
-  free(entries);
-  free(matches);
-  free(trigrams);
+cleanup:
+  free_if(entries);
+  free_if(matches);
+  free_if(trigrams);
   return nb_results;
 }
 
