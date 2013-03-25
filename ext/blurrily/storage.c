@@ -348,13 +348,13 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
 int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t reference, uint32_t weight)
 {
   int        nb_trigrams  = -1;
-  int        length       = strlen(needle);
+  size_t     length       = strlen(needle);
   trigram_t* trigrams     = (trigram_t*)NULL;
 
   trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
 
-  if (weight <= 0) weight = length;
+  if (weight <= 0) weight = (uint32_t) length;
 
   for (int k = 0; k < nb_trigrams; ++k) {
     trigram_t          t       = trigrams[k];
@@ -403,7 +403,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
 int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t limit, trigram_match results)
 {
   int              nb_trigrams = -1;
-  int              length      = strlen(needle);
+  size_t           length      = strlen(needle);
   trigram_t*       trigrams    = (trigram_t*)NULL;
   int              nb_entries  = -1;
   trigram_entry_t* entries     = NULL;
