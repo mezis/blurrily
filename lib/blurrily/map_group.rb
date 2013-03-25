@@ -14,5 +14,11 @@ module Blurrily
     def map(db)
       self.class.maps[db] ||= Map.new
     end
+
+    def save
+      self.class.maps.each do |db_name, map|
+        map.save(File.join(@dir, db_name))
+      end
+    end
   end
 end
