@@ -31,6 +31,16 @@ describe Blurrily::MapGroup do
       subject.map("location_en").object_id.should == map1.object_id
       subject.map("location_en").object_id.should_not == map2.object_id
     end
+
+    it "loads from file if exists rather than creating a new db" do
+      map1 = subject.map('location_en')
+      map1.put('aaa',123,0)
+      subject.save
+
+      loaded_map = described_class.new.map('location_en')
+      loaded_map.find('aaa').first.first.should == 123
+    end
+
   end
 
   context "saving the map to file" do
@@ -47,7 +57,7 @@ describe Blurrily::MapGroup do
     end
 
     after(:each) do
-      FileUtils.rm Dir.glob('location.*\.dat')
+      FileUtils.rm Dir.glob('location*.dat')
     end
   end
 
