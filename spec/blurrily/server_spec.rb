@@ -9,7 +9,7 @@ describe Blurrily::Server do
 
   context "a new connection" do
     subject { described_class.new } do
-      let(:host) { 0.0.0.0 }
+      let(:host) { '0.0.0.0' }
       let(:port) { 12021 }
       let(:dir)  { '.' }
 
