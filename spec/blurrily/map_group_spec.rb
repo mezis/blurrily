@@ -17,10 +17,12 @@ describe Blurrily::MapGroup do
   context "creating, loading and returning a db" do
     subject { described_class.new }
 
+    it "should return an instance of Map for a given DB" do
+      subject.map("location_en").should be_a(Blurrily::Map)
+    end
+
     it "should create a Map if the given DB does not already exist"
 
-    it "should return an instance of Map for a given DB"
- 
   end
 
 end
