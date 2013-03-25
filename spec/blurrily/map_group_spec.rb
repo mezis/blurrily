@@ -42,9 +42,13 @@ describe Blurrily::MapGroup do
 
       subject.save
 
-      File.exists?('./location_en').should be_true
-      File.exists?('./location_fr').should be_true
-    end    
+      File.exists?(File.join('.','location_en.dat')).should be_true
+      File.exists?(File.join('.','location_fr.dat')).should be_true
+    end
+
+    after(:each) do
+      FileUtils.rm Dir.glob('location.*\.dat')
+    end
   end
 
 end
