@@ -31,9 +31,20 @@ describe Blurrily::MapGroup do
       subject.map("location_en").object_id.should == map1.object_id
       subject.map("location_en").object_id.should_not == map2.object_id
     end
+  end
 
-    it "creates a Map if the given DB does not already exist"
+  context "saving the map to file" do
+    subject { described_class.new }
 
+    its "saves all maps" do
+      subject.map('location_en')
+      subject.map('location_fr')
+
+      subject.save
+
+      File.exists?('./location_en').should be_true
+      File.exists?('./location_fr').should be_true
+    end    
   end
 
 end
