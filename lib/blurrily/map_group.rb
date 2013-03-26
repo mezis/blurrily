@@ -7,7 +7,7 @@ module Blurrily
 
     @maps = {}
 
-    def initialize(dir = '.')
+    def initialize(dir)
       @dir = dir
     end
 

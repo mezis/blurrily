@@ -11,15 +11,10 @@ describe Blurrily::MapGroup do
     it "saves the given directory" do
       subject.new("test_dir").instance_variable_get('@dir').should == "test_dir"
     end
-
-    it "saves the current dir if no directory name is given" do
-      subject.new().instance_variable_get('@dir').should == "."
-    end
-
   end
 
   context "creating, loading and returning a db" do
-    subject { described_class.new }
+    subject { described_class.new('.') }
 
     it "returns an instance of Map for a given DB" do
       subject.map("location_en").should be_a(Blurrily::Map)
@@ -37,14 +32,14 @@ describe Blurrily::MapGroup do
       map1.put('aaa',123,0)
       subject.save
 
-      loaded_map = described_class.new.map('location_en')
+      loaded_map = described_class.new('.').map('location_en')
       loaded_map.find('aaa').first.first.should == 123
     end
 
   end
 
   context "saving the map to file" do
-    subject { described_class.new }
+    subject { described_class.new('.') }
 
     its "saves all maps" do
       subject.map('location_en')
