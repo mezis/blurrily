@@ -83,9 +83,8 @@ describe Blurrily::Server do
 
     it 'responds and closes connection' do
       Timeout::timeout(1) do
-        subject.stub(:process => 'Me!')
         socket.puts 'Who is most beautiful in the world?'
-        socket.gets.should == 'Me!'
+        socket.gets.should =~ /ERROR\tUnknown command/
         socket.gets.should be_nil
       end
     end
