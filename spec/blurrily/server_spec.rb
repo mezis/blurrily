@@ -20,12 +20,55 @@ describe Blurrily::Server do
   end
 
   describe '#process' do
-    it 'returns formatted result for good input' do
+
+    # Accepts input strings:
+    # CLEAR-><db>
+    # FIND -><db>-><needle>->[limit]
+    # PUT-><db>-><needle>-><ref>->[weight]
+
+    it 'PUT and FIND finds something' do
+      subject.process("PUT\tlocations_en\tgreat london\t12").should == 'OK'
+      subject.process("PUT\tlocations_en\tgreater masovian\t13").should == 'OK'
+      subject.process("FIND\tlocations_en\tgreat").should == "FOUND\t12\t13"
 
     end
 
-    it 'returns nil for bad input data' do
-      subject.process('Some stuff').should be_nil
+    it 'FIND returns NOT FOUND if nothing found' do
+      subject.process("FIND\tlocations_en\tgreat london").should == "NOT FOUND"
+    end
+
+
+    it 'returns ERROR for bad input data' do
+      subject.process('Some stuff').should =~ /^ERROR\tUnknown command/
+    end
+
+    it 'returns ERROR for bad db name' do
+      subject.process("FIND\tbad db name\tWhatever string").should =~ /^ERROR\tInvalid db name/
+    end
+
+    it 'returns ERROR for not numeric limit' do
+      subject.process("FIND\tdb\tWhatever string\tlimit").should =~ /^ERROR\tLimit must be a number/
+    end
+
+    it 'returns ERROR for not numeric ref' do
+      subject.process("PUT\tdb\tWhatever string\t12\tweight").should =~ /^ERROR\tWeight must be a number/
+    end
+
+    it 'returns ERROR for not numeric weight' do
+      subject.process("PUT\tdb\tWhatever string\tref").should =~ /^ERROR\tRef must be a number/
+    end
+
+    it 'does not return ERROR for good PUT string' do
+      subject.process("PUT\tdb\tWhatever string\t12\t1").should =~ /^OK/
+    end
+
+    it 'does not return ERROR for limit' do
+      subject.process("FIND\tdb\tWhatever string\t2").should =~ /^NOT FOUND/
+    end
+
+    it 'CLEAR tries to clear given DB' do
+      subject.send(:map_group).should_receive(:clear).with('locations_en')
+      subject.process("CLEAR\tlocations_en")
     end
   end
 
