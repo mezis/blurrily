@@ -1,8 +1,6 @@
 module Blurrily
   class MapGroup
 
-    attr_reader :maps
-
     def initialize(dir)
       @maps = {}
       @dir = dir
