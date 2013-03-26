@@ -1,22 +1,19 @@
 module Blurrily
   class MapGroup
 
-    class << self
-      attr_accessor :maps
-    end
-
-    @maps = {}
+    attr_reader :maps
 
     def initialize(dir)
+      @maps = {}
       @dir = dir
     end
 
     def map(name)
-      self.class.maps[name] ||= load_map(name) || Map.new
+      @maps[name] ||= load_map(name) || Map.new
     end
 
     def save
-      self.class.maps.each do |name, map|
+      @maps.each do |name, map|
         map.save(map_path(name))
       end
     end
