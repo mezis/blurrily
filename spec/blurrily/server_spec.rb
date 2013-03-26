@@ -58,6 +58,10 @@ describe Blurrily::Server do
       subject.process("PUT\tdb\tWhatever string\tref").should =~ /^ERROR\tRef must be a number/
     end
 
+    it 'returns ERROR for too many aruments' do
+      subject.process("PUT\tdb\tWhatever string\tref\tweight\targument too much").should =~ /^ERROR\twrong number /
+    end
+
     it 'does not return ERROR for good PUT string' do
       subject.process("PUT\tdb\tWhatever string\t12\t1").should =~ /^OK/
     end

@@ -18,6 +18,9 @@ module Blurrily
       return error('Unknown command') unless %w{FIND PUT CLEAR}.include? command
       return error('Invalid db name') unless map_name =~ /^[a-z_]+$/
       send(command.downcase, map_name, *args)
+
+    rescue ArgumentError => e
+      error(e.message)
     end
 
     def put(map_name, needle, ref, weight = nil)
