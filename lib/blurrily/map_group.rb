@@ -1,9 +1,11 @@
+require 'fileutils'
+
 module Blurrily
   class MapGroup
 
-    def initialize(dir)
+    def initialize(directory)
+      @directory = directory
       @maps = {}
-      @dir = dir
     end
 
     def map(name)
@@ -11,6 +13,7 @@ module Blurrily
     end
 
     def save
+      FileUtils.makedirs(@directory) unless File.directory?(@directory)
       @maps.each do |name, map|
         map.save(map_path(name))
       end
@@ -25,7 +28,7 @@ module Blurrily
     end
 
     def map_path(name)
-      File.join(@dir, "#{name}.dat")
+      File.join(@directory, "#{name}.trigrams")
     end
   end
 end
