@@ -3,11 +3,9 @@ require 'eventmachine'
 module Blurrily
   class Server
 
-    class Error < StandardError; end
-    class ProtocolError < Error; end
+    class ProtocolError < StandardError; end
 
     COMMANDS = %{FIND PUT CLEAR}
-
 
     def initialize(options)
       @host, @port, @directory = options[:host], options[:port], options[:directory]

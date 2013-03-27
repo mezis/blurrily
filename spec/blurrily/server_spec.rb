@@ -24,7 +24,6 @@ describe Blurrily::Server do
       subject.process_command_line("PUT\tlocations_en\tgreat london\t12").should be_nil
       subject.process_command_line("PUT\tlocations_en\tgreater masovian\t13").should be_nil
       subject.process_command_line("FIND\tlocations_en\tgreat").should == "FOUND\t12\t13"
-
     end
 
     it 'FIND returns "FOUND" if nothing found' do
