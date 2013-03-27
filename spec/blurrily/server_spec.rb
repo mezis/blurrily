@@ -10,8 +10,8 @@ describe Blurrily::Server do
     before :all do
       @host = '0.0.0.0'
       @directory = '.'
-      result = 3.times { result = try_to_start_server(@host, @directory); break result if result }
-      raise 'Could not start server' if result == 10
+      result = 5.times { result = try_to_start_server(@host, @directory); break result if result }
+      raise 'Could not start server' if result == 5
       @server, @port, @thread = result
     end
 
@@ -37,7 +37,7 @@ describe Blurrily::Server do
     server = described_class.new({ :host => host, :port => port, :directory => directory })
     thread = Thread.new { server.start }
     started = 3.times do |i|
-      sleep 0.01 * 14 ** i
+      sleep 0.01 * 1ot4 ** i
       next unless thread.alive?
       connection = begin
         TCPSocket.new(host, port)
