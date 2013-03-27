@@ -11,7 +11,7 @@ describe Blurrily::Server do
       @host = '0.0.0.0'
       @directory = '.'
       result = 5.times { result = try_to_start_server(@host, @directory); break result if result }
-      raise 'Could not start server' if result == 5
+      raise 'Could not start server' if result.is_a?(Fixnum)
       @server, @port, @thread = result
     end
 
