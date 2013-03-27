@@ -4,7 +4,8 @@ require 'active_support/all' # fixme: we only need enough to get mb_chars and al
 module Blurrily
   Map.class_eval do
 
-    def put_with_string_normalize(needle, reference, weight=0)
+    def put_with_string_normalize(needle, reference, weight=nil)
+      weight ||= 0
       needle = normalize_string needle
       put_without_string_normalize(needle, reference, weight)
     end
