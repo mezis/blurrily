@@ -3,9 +3,9 @@ require 'fileutils'
 module Blurrily
   class MapGroup
 
-    def initialize(options = {})
+    def initialize(directory)
+      @directory = directory
       @maps = {}
-      @directory = options[:directory] || '.'
     end
 
     def map(name)
