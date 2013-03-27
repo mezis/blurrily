@@ -8,7 +8,7 @@ options = OpenStruct.new
 
 # Defaults
 options.port = 12021
-options.dir  = '.'
+options.directory  = '.'
 options.host = '0.0.0.0'
 
 parser = OptionParser.new do |opts|
@@ -19,8 +19,8 @@ parser = OptionParser.new do |opts|
     options.port = port.to_i
   end
 
-  opts.on("-d", "--directory <DIRECTORY>", "Work in DIRECTORY, defaults to .") do |dir|
-    options.dir = dir
+  opts.on("-d", "--directory <DIRECTORY>", "Work in DIRECTORY, defaults to .") do |directory|
+    options.directory = directory
   end
 
   opts.on("-b", "--bind <ADDRESS>", "Bind to ADDRESS, defaults to 0.0.0.0") do |address|
@@ -36,4 +36,4 @@ end
 parser.parse!(ARGV)
 
 puts "Starting Blurrily Server v#{Blurrily::VERSION} in directory: '#{options.dir}' on #{options.host}:#{options.port}"
-Blurrily::Server.new(options.host, options.port, options.dir).start
+Blurrily::Server.new(:host => options.host, :port => options.port, :directory => options.directory).start
