@@ -42,6 +42,9 @@ describe Blurrily::MapGroup do
       map_group.map('test')
       map_group.save
       File.exists?(File.join('tmp','test.trigrams')).should be_true
+    end
+
+    after(:each) do
       FileUtils.rm Dir.glob('tmp/test.trigrams')
     end
   end
