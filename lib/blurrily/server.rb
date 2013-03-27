@@ -9,10 +9,12 @@ module Blurrily
 
     def initialize(options)
       @host, @port, @directory = options[:host], options[:port], options[:directory]
-      raise ArgumentError if [@host, @port, @directory].any?(&:nil?)
+      raise ArgumentError, ':directory is mandatory' if @directory.nil?
     end
 
     def start
+      raise ArgumentError, ':host and :port are mandatory to start server' if [@host, @port].any?(&:nil?)
+
       EventMachine.run do
         # hit Control + C to stop
         Signal.trap("INT")  { EventMachine.stop }
