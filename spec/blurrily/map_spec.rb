@@ -24,10 +24,15 @@ describe Blurrily::Map do
       trigrams.should   == 7
     end
 
-    it 'stores duplicate references' do
+    it 'returns number of added trigrams' do
+      subject.put('foobar', 123).should == 7
+      subject.put('foobar', 123).should == 0
+    end
+
+    it 'does not store duplicate references' do
       2.times { subject.put 'foobar', 123, 0 }
-      references.should == 2
-      trigrams.should   == 14
+      references.should == 1
+      trigrams.should   == 7
     end
 
     it 'accepts empty strings' do
@@ -56,12 +61,7 @@ describe Blurrily::Map do
         3.times { subject.put 'london', 123, 0 }
         subject.delete 123
         subject.stats[:trigrams].should == 0
-      end
-
-      it 'breaks reference counter' do
-        3.times { subject.put 'london', 123, 0 }
-        subject.delete 123
-        subject.stats[:references].should == 2
+        subject.stats[:references].should == 0
       end
     end
 
@@ -98,6 +98,20 @@ describe Blurrily::Map do
       end
     end
 
+    it 'works with duplicated references' do
+      subject.put needle, 123
+      subject.put 'london2', 123
+      result.length.should == 1
+      result.first.first.should == 123
+    end
+
+    it 'works with duplicated needles and references' do
+      subject.put needle, 123
+      subject.put needle, 123
+      result.length.should == 1
+      result.first.first.should == 123
+    end
+
     it 'returns perfect matches' do
       subject.put 'london', 123, 0
       result.first.should == [123, 7, 6]
@@ -108,6 +122,12 @@ describe Blurrily::Map do
       subject.put 'london city airport', 124, 0
       subject.put 'london',              123, 0
       result.first.first.should == 123
+    end
+
+    it 'ignores duplicate references' do
+      subject.put 'london', 123
+      subject.put 'paris',  123
+      result.should_not be_empty
     end
 
     context 'when needle is mis-spelt' do
