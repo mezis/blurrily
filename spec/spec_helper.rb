@@ -30,10 +30,6 @@ def mock_tcp_next_request(string, client_expectation = nil)
   }
 end
 
-def unmock_tcp
-  TCPSocket.stub!(:new).and_return { TCP_NEW.call }
-end
-
 RSpec.configure do |config|
   config.before(:each) do
   end
