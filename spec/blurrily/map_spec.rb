@@ -24,6 +24,11 @@ describe Blurrily::Map do
       trigrams.should   == 7
     end
 
+    it 'returns number of added trigrams' do
+      subject.put('foobar', 123).should == 7
+      subject.put('foobar', 123).should == 0
+    end
+
     it 'does not store duplicate references' do
       2.times { subject.put 'foobar', 123, 0 }
       references.should == 1

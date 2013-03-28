@@ -402,7 +402,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
   blurrily_refs_add(haystack->refs, reference);
 
   free((void*)trigrams);
-  return 0;
+  return nb_trigrams;
 }
 
 /******************************************************************************/

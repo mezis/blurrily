@@ -25,6 +25,7 @@ class Blurrily::CommandProcessor
     raise ProtocolError, 'Ref must be a number' if ref !~ /\d+/
     raise ProtocolError, 'Weight must be a number' if weight && weight !~ /\d+/
     map_group.map(map_name).put(*[needle, ref.to_i, weight && weight.to_i].compact)
+    return nil
   end
 
   def on_find(map_name, needle, limit = 10)
