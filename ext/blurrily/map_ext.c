@@ -92,7 +92,7 @@ static VALUE blurrily_save(VALUE self, VALUE rb_path) {
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_save(haystack, path);
-  assert(res >= 0);
+  if (res < 0) { rb_sys_fail(NULL); return Qnil; }
 
   return Qnil;
 }
