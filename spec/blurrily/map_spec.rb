@@ -98,6 +98,20 @@ describe Blurrily::Map do
       end
     end
 
+    it 'works with duplicated references' do
+      subject.put needle, 123
+      subject.put 'london2', 123
+      result.length.should == 1
+      result.first.first.should == 123
+    end
+
+    it 'works with duplicated needles and references' do
+      subject.put needle, 123
+      subject.put needle, 123
+      result.length.should == 1
+      result.first.first.should == 123
+    end
+
     it 'returns perfect matches' do
       subject.put 'london', 123, 0
       result.first.should == [123, 7, 6]
