@@ -187,6 +187,12 @@ describe Blurrily::Map do
       path.should exist
     end
 
+    it 'raises exception when directory does not exist' do
+      expect {
+        subject.save '/var/nonexistent/foo'
+      }.to raise_exception(Errno::ENOENT)
+    end
+
     it 'uses a magic header' do
       perform
       header = path.read(8)
