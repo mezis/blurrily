@@ -10,9 +10,7 @@ describe Blurrily::Server do
     before :all do
       @host = '0.0.0.0'
       @directory = '.'
-      result = 5.times { result = try_to_start_server(@host, @directory); break result if result }
-      raise 'Could not start server' if result.is_a?(Fixnum)
-      @server, @port, @thread = result
+      @server, @port, @thread = try_to_start_server(@host, @directory)
     end
 
     after :all do
@@ -33,22 +31,26 @@ describe Blurrily::Server do
   end
 
   def try_to_start_server(host, directory)
-    port = random_port
-    server = described_class.new({ :host => host, :port => port, :directory => directory })
-    thread = Thread.new { server.start }
-    started = 3.times do |i|
-      sleep 0.01 * 14 ** i
-      next unless thread.alive?
-      connection = begin
-        TCPSocket.new(host, port)
-      rescue Errno::ECONNREFUSED
-        nil
+    result = 5.times do
+      port = random_port
+      server = described_class.new({ :host => host, :port => port, :directory => directory })
+      thread = Thread.new { server.start }
+      started = 3.times do |i|
+        sleep 0.01 * 14 ** i
+        next unless thread.alive?
+        connection = begin
+          TCPSocket.new(host, port)
+        rescue Errno::ECONNREFUSED
+          nil
+        end
+        if connection
+          connection.close
+          break true
+        end
       end
-      if connection
-        connection.close
-        break true
-      end
+      break [server, port, thread] if started == true
     end
-    started == true ? [server, port, thread] : nil
+    raise 'Could not start server' if result.is_a?(Fixnum)
+    result
   end
 end
