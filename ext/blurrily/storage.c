@@ -269,7 +269,7 @@ int blurrily_storage_close(trigram_map* haystack_ptr)
 int blurrily_storage_save(trigram_map haystack, const char* path)
 {
   int         fd          = -1;
-  int         res         = -1;
+  int         res         = 0;
   uint8_t*    ptr         = (uint8_t*)NULL;
   size_t      total_size  = 0;
   size_t      offset      = 0;
@@ -293,13 +293,13 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
 
   /* open and map file */
   fd = open(path_tmp, O_RDWR | O_CREAT | O_TRUNC, 0644);
-  assert(fd >= 0);
+  if (fd < 0) goto cleanup;
 
   res = ftruncate(fd, total_size);
-  assert(res >= 0);
+  if (res < 0) goto cleanup;
 
   ptr = mmap(NULL, total_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-  assert(ptr != NULL);
+  if (ptr == NULL) { res = -1 ; goto cleanup ; }
 
   /* flush data */
   memset(ptr, 0x00, total_size);
@@ -330,17 +330,21 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   }
   assert(offset == total_size);
 
-  res = munmap(ptr, total_size);
-  assert(res >= 0);
+cleanup:
+  if (ptr != NULL && total_size > 0) {
+    res = munmap(ptr, total_size);
+  }
 
-  res = close(fd);
-  assert(res >= 0);
+  if (fd > 0) {
+    res = close(fd);
+  }
 
   /* commit by renaming the file */
-  res = rename(path_tmp, path);
-  assert(res >= 0);
+  if (res >= 0 && path) {
+    res = rename(path_tmp, path);
+  }
 
-  return 0;
+  return res;
 }
 
 /******************************************************************************/
