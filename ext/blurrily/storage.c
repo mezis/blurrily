@@ -21,8 +21,7 @@
 #endif
 
 #include "storage.h"
-
-#include "log.h"
+#include "search_tree.h"
 
 /******************************************************************************/
 
