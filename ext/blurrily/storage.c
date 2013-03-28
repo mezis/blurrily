@@ -66,7 +66,7 @@ struct PACKED_STRUCT trigram_map_t
 
   uint32_t          total_references;
   uint32_t          total_trigrams;
-  uint32_t          mapped_size;        /* when mapped from disk, the number of bytes mapped */
+  size_t            mapped_size;        /* when mapped from disk, the number of bytes mapped */
   int               mapped_fd;          /* when mapped from disk, the file descriptor */
   blurrily_refs_t*  refs;
   
