@@ -43,6 +43,12 @@ int blurrily_storage_load(trigram_map* haystack, const char* path);
 int blurrily_storage_close(trigram_map* haystack);
 
 /* 
+  Mark resources managed by Ruby GC.
+*/
+void blurrily_storage_mark(trigram_map haystack);
+
+
+/* 
   Persist to disk what <blurrily_storage_new> or <blurrily_storage_open>
   gave you.
 */

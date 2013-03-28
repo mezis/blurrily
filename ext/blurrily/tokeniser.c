@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <math.h>
 #include "tokeniser.h"
-#include "log.h"
 #include "blurrily.h"
 
 
