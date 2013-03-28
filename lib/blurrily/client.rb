@@ -86,6 +86,7 @@ module Blurrily
     end
 
     def clear
+      raise(NotImplementedError)
     end
 
     private

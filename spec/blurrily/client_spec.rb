@@ -7,21 +7,7 @@ describe Blurrily::Client do
   
   let(:config) { { :host => '0.0.0.0', :port => 12021, :db_name => 'location_en' } }
 
-  before(:each) do
-    @server = TCPServer.new 12021
-  end
-
-  after do
-    @server.close
-  end
-
   subject { described_class.new(config) }
-
-  it "opens a connection to a defined server and db" do
-    subject.instance_variable_get(:@host).should == '0.0.0.0'
-    subject.instance_variable_get(:@port).should == 12021
-    subject.instance_variable_get(:@db_name).should == 'location_en'
-  end
 
   %w(host port db_name).each do |req|
     it "fails if no #{req} passed" do
@@ -47,6 +33,7 @@ describe Blurrily::Client do
 
     it "creates a well formed request command string" do
       mock_tcp_next_request("FOUND\t123", "FIND\tlocation_en\tlondon\t0")
+      TCPSocket.should_receive(:new).with(config[:host], config[:port])
       subject.find("london")
     end
 
