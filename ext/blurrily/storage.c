@@ -68,6 +68,7 @@ struct PACKED_STRUCT trigram_map_t
   uint32_t          total_trigrams;
   uint32_t          mapped_size;        /* when mapped from disk, the number of bytes mapped */
   int               mapped_fd;          /* when mapped from disk, the file descriptor */
+  blurrily_refs_t*  refs;
   
   trigram_entries_t map[TRIGRAM_COUNT]; /* this whole structure is ~500KB */
 };
@@ -256,6 +257,7 @@ int blurrily_storage_close(trigram_map* haystack_ptr)
       free(ptr->entries);
       ++ptr;
     }
+    if (haystack->refs) blurrily_refs_free(&haystack->refs);
     free(haystack);
   }
 
@@ -310,6 +312,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
 
   header->mapped_size = 0;
   header->mapped_fd   = 0;
+  header->refs        = NULL;
 
   /* copy each map, set offset in header */
   for (int k = 0; k < TRIGRAM_COUNT; ++k) {
@@ -347,13 +350,16 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
 int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t reference, uint32_t weight)
 {
   int        nb_trigrams  = -1;
-  int        length       = strlen(needle);
+  size_t     length       = strlen(needle);
   trigram_t* trigrams     = (trigram_t*)NULL;
+
+  if (!haystack->refs) blurrily_refs_new(&haystack->refs);
+  if (blurrily_refs_test(haystack->refs, reference)) return 0;
+  if (weight <= 0) weight = (uint32_t) length;
 
   trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
 
-  if (weight <= 0) weight = length;
 
   for (int k = 0; k < nb_trigrams; ++k) {
     trigram_t          t       = trigrams[k];
@@ -393,6 +399,8 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
   haystack->total_trigrams   += nb_trigrams;
   haystack->total_references += 1;
 
+  blurrily_refs_add(haystack->refs, reference);
+
   free((void*)trigrams);
   return 0;
 }
@@ -402,7 +410,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
 int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t limit, trigram_match results)
 {
   int              nb_trigrams = -1;
-  int              length      = strlen(needle);
+  size_t           length      = strlen(needle);
   trigram_t*       trigrams    = (trigram_t*)NULL;
   int              nb_entries  = -1;
   trigram_entry_t* entries     = NULL;
@@ -537,4 +545,12 @@ int blurrily_storage_stats(trigram_map haystack, trigram_stat_t* stats)
   stats->references = haystack->total_references;
   stats->trigrams   = haystack->total_trigrams;
   return 0;
+}
+
+/******************************************************************************/
+
+void blurrily_storage_mark(trigram_map haystack)
+{
+  if (haystack->refs) blurrily_refs_mark(haystack->refs);
+  return;
 }

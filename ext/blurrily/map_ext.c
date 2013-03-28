@@ -9,8 +9,17 @@ static void blurrily_free(void* haystack)
 {
   int res = -1;
 
+  if (haystack == NULL) return;
   res = blurrily_storage_close((trigram_map*) &haystack);
   assert(res >= 0);
+}
+
+/******************************************************************************/
+
+static void blurrily_mark(void* haystack)
+{
+  if (haystack == NULL) return;
+  blurrily_storage_mark((trigram_map) haystack);
 }
 
 /******************************************************************************/
@@ -23,7 +32,7 @@ static VALUE blurrily_new(VALUE class) {
   res = blurrily_storage_new(&haystack);
   if (res < 0) { rb_sys_fail(NULL); return Qnil; }
 
-  wrapper = Data_Wrap_Struct(class, 0, blurrily_free, (void*)haystack);
+  wrapper = Data_Wrap_Struct(class, blurrily_mark, blurrily_free, (void*)haystack);
   rb_obj_call_init(wrapper, 0, NULL);
   return wrapper;
 }
@@ -39,7 +48,7 @@ static VALUE blurrily_load(VALUE class, VALUE rb_path) {
   res = blurrily_storage_load(&haystack, path);
   if (res < 0) { rb_sys_fail(NULL); return Qnil; }
 
-  wrapper = Data_Wrap_Struct(class, 0, blurrily_free, (void*)haystack);
+  wrapper = Data_Wrap_Struct(class, blurrily_mark, blurrily_free, (void*)haystack);
   rb_obj_call_init(wrapper, 0, NULL);
   return wrapper;
 }
@@ -64,7 +73,7 @@ static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE
   res = blurrily_storage_put(haystack, needle, reference, weight);
   assert(res >= 0);
 
-  return Qnil;
+  return INT2NUM(res);
 }
 
 /******************************************************************************/
