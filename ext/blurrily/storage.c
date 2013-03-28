@@ -351,13 +351,31 @@ cleanup:
 
 /******************************************************************************/
 
+void add_all_refs(trigram_map haystack)
+{
+  assert(haystack->refs != NULL);
+
+  for (int k = 0; k < TRIGRAM_COUNT; ++k) {
+    trigram_entries_t* map = haystack->map + k;
+    trigram_entry_t*   ptr = map->entries;
+    for (uint32_t j = 0; j < map->used; ++j, ++ptr) {
+      blurrily_refs_add(haystack->refs, ptr->reference);
+    }
+  }
+}
+
+/******************************************************************************/
+
 int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t reference, uint32_t weight)
 {
   int        nb_trigrams  = -1;
   size_t     length       = strlen(needle);
   trigram_t* trigrams     = (trigram_t*)NULL;
 
-  if (!haystack->refs) blurrily_refs_new(&haystack->refs);
+  if (!haystack->refs) {
+    blurrily_refs_new(&haystack->refs);
+    add_all_refs(haystack);
+  }
   if (blurrily_refs_test(haystack->refs, reference)) return 0;
   if (weight <= 0) weight = (uint32_t) length;
 

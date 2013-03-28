@@ -46,6 +46,14 @@ describe Blurrily::Map do
       references.should == 1
       trigrams.should   == 2
     end
+
+    it 'ignores dupes after save/load cycle' do
+      subject.put 'london', 123
+      subject.save 'tmp/map'
+      map = described_class.load 'tmp/map'
+      map.put 'paris', 123
+      map.find('paris').should be_empty
+    end
   end
 
   describe '#delete' do
