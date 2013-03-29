@@ -1,0 +1,176 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'bundler/setup'
+require 'blurrily'
+require 'progressbar'
+require 'open-uri'
+require 'tempfile'
+require 'benchmark/ips'
+require 'rusage'
+
+
+module Blurrily
+  class Benchmark
+    ARCHIVES = {
+      cities: 'http://mezis.s3.amazonaws.com/blurrily-data/cities1000-filtered.txt.gz',
+      us:     'http://mezis.s3.amazonaws.com/blurrily-data/us-filtered.txt.gz',
+      europe: 'http://mezis.s3.amazonaws.com/blurrily-data/de_fr_es_gb_it-filtered.txt.gz',
+      world:  'http://mezis.s3.amazonaws.com/blurrily-data/allCountries-filtered.txt.gz',
+      russia: 'http://mezis.s3.amazonaws.com/blurrily-data/ru-filtered.txt.gz',
+      asia:   'http://mezis.s3.amazonaws.com/blurrily-data/ru_cn_ir-filtered.txt.gz',
+    }
+
+    SEARCH_CITIES = %w(London Paris Rome Luxembourg) +
+      %w(Lonndon Pari Roma Luxenbour)
+
+    def initialize(key)
+      @source_url = ARCHIVES[key] or raise ArgumentError
+      @key = key
+    end
+
+    def run
+      log "Starting benchmark for '#{key}'"
+      do_download
+      do_import
+      do_save
+      do_bm
+    end
+
+    private
+
+    attr :key, :source_url
+
+    def do_download
+      return if raw_data_path.exist?
+      log 'download and save file'
+      output = Tempfile.new($PROGRAM_NAME)
+      URI.parse(source_url).open do |input|
+        output.write input.read
+      end
+      File.rename(output.path, raw_data_path.to_s)
+      return
+    end
+
+    def do_import
+      log "Counting data entries"
+      rows = 0
+      get_reader.each_line { |line| rows += 1 }
+
+      log "Importing data"
+      progress = ProgressBar.new(key.to_s, rows)
+      get_reader.each_line do |line|
+        index, needle = line.strip.split("\t")
+        map.put(needle, index.to_i)
+        progress.inc
+      end
+      progress.finish
+      log "#{rows} records imported, #{map.stats[:references]} refs, #{map.stats[:trigrams]} trigrams"
+      return
+    end
+
+    def do_save
+      map.save(trigram_data_path.to_s)
+    end
+
+    def do_load
+      @map = Map.load(trigram_data_path.to_s)
+    end
+
+    def do_warm
+      # rehersal, necessary as the hash table will be reconstructed
+      map.put 'foo', 123
+    end
+
+    def do_prepare
+      do_load ; do_warm ; do_gc  
+    end
+
+    def do_bm
+      log 'Benchmarking'
+
+      ::Benchmark.ips do |x|
+        do_prepare
+        x.report('save') do |times|
+          times.times { do_save }
+        end
+
+        do_prepare
+        x.report('load') do |times|
+          times.times { do_load }
+        end
+
+        do_prepare
+        x.report('warm load') do |times|
+          times.times { do_load ; do_warm }
+        end
+
+        do_prepare
+        x.report('find') do |times|
+          times.times { map.find(random_city) }
+        end
+
+        do_prepare
+        x.report('put') do |times|
+          times.times { map.put(random_city, rand(1<<31)) }
+        end
+
+        do_prepare
+        x.report('delete') do |times|
+          times.times { map.delete(rand(1<<31)) }
+        end
+
+        do_prepare
+        x.report('stress') do |times|
+          times.times do 
+            case rand(3)
+            when 0 then map.delete(rand(1<<31))
+            when 1 then map.put(random_city, rand(1<<31))
+            when 2 then map.find(random_city)
+            end
+          end
+        end
+      end
+    end
+
+    def do_gc
+      ObjectSpace.garbage_collect
+      GC.start
+    end
+
+    def raw_data_path
+      @raw_data_path ||= Pathname.new("#{key}.txt.gz")
+    end
+
+    def trigram_data_path
+      @trigram_data_path ||= Pathname.new("#{key}.trigrams")
+    end
+
+    def get_reader
+      Zlib::GzipReader.open(raw_data_path.to_s)
+    end
+
+    def log(message)
+      puts "[%s] %s: %s" % [Time.now.strftime('%T.%L'), $0, message]
+    end
+
+    def map
+      @map ||= Map.new
+    end
+
+    def random_city
+      SEARCH_CITIES[rand(SEARCH_CITIES.length)]
+    end
+  end
+end
+
+$PROGRAM_NAME = 'blurrily:bench'
+
+# Blurrily::Benchmark.new(:cities).run
+# Blurrily::Benchmark.new(:europe).run
+# Blurrily::Benchmark.new(:us).run
+# Blurrily::Benchmark.new(:world).run
+Blurrily::Benchmark.new(:russia).run
+Blurrily::Benchmark.new(:asia).run
+
+__END__
+
