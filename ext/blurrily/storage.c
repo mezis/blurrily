@@ -393,7 +393,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
       map->entries = (trigram_entry_t*) calloc(map->buckets, sizeof(trigram_entry_t));
     }
     else if (map->used == map->buckets) {
-      uint32_t new_buckets = map->buckets * 4/3;
+      uint32_t         new_buckets = map->buckets * 4/3;
       trigram_entry_t* new_entries = NULL;
       LOG("- realloc for %d\n", t);
 
@@ -404,6 +404,11 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
       /* scribble the rest of the map*/      
       memset(new_entries + map->buckets, 0xFF, (new_buckets - map->buckets) * sizeof(trigram_entry_t));
 
+      #ifndef NDEBUG
+        /* scribble old data */
+        memset(map->entries, 0xFF, map->buckets * sizeof(trigram_entry_t));
+      #endif
+
       if (map->entries_offset) {
         /* old data was on disk, just mark it as no longer on disk */
         map->entries_offset = 0;
@@ -411,11 +416,6 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
         /* free old data */
         free(map->entries);
       }
-
-      #ifndef NDEBUG
-        /* scribble old data */
-        memset(map->entries, 0xFF, map->buckets * sizeof(trigram_entry_t));
-      #endif
 
       /* swap fields */
       map->buckets = new_buckets;
