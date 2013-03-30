@@ -6,15 +6,15 @@ require 'progressbar'
 require 'open-uri'
 require 'tempfile'
 require 'benchmark/ips'
-require 'rusage'
+require 'zlib'
 
 
 module Blurrily
   class Benchmark
     ARCHIVES = {
       cities: 'http://mezis.s3.amazonaws.com/blurrily-data/cities1000-filtered.txt.gz',
-      us:     'http://mezis.s3.amazonaws.com/blurrily-data/us-filtered.txt.gz',
       europe: 'http://mezis.s3.amazonaws.com/blurrily-data/de_fr_es_gb_it-filtered.txt.gz',
+      us:     'http://mezis.s3.amazonaws.com/blurrily-data/us-filtered.txt.gz',
       world:  'http://mezis.s3.amazonaws.com/blurrily-data/allCountries-filtered.txt.gz',
       russia: 'http://mezis.s3.amazonaws.com/blurrily-data/ru-filtered.txt.gz',
       asia:   'http://mezis.s3.amazonaws.com/blurrily-data/ru_cn_ir-filtered.txt.gz',
@@ -47,7 +47,8 @@ module Blurrily
       URI.parse(source_url).open do |input|
         output.write input.read
       end
-      File.rename(output.path, raw_data_path.to_s)
+      output.close
+      FileUtils.cp(output.path, raw_data_path.to_s)
       return
     end
 
@@ -64,16 +65,22 @@ module Blurrily
         progress.inc
       end
       progress.finish
-      log "#{rows} records imported, #{map.stats[:references]} refs, #{map.stats[:trigrams]} trigrams"
+      puts "#{rows} records imported, #{map.stats[:references]} refs, #{map.stats[:trigrams]} trigrams"
       return
     end
 
-    def do_save
-      map.save(trigram_data_path.to_s)
+    def do_save(path = nil)
+      path ||= trigram_data_path.to_s
+      map.save path
     end
 
     def do_load
       @map = Map.load(trigram_data_path.to_s)
+    end
+
+    def do_close
+      @map = nil
+      do_gc
     end
 
     def do_warm
@@ -82,44 +89,25 @@ module Blurrily
     end
 
     def do_prepare
-      do_load ; do_warm ; do_gc  
+      do_load ; do_warm ; do_gc
     end
 
     def do_bm
       log 'Benchmarking'
 
       ::Benchmark.ips do |x|
-        do_prepare
-        x.report('save') do |times|
-          times.times { do_save }
-        end
-
-        do_prepare
-        x.report('load') do |times|
-          times.times { do_load }
-        end
-
-        do_prepare
-        x.report('warm load') do |times|
-          times.times { do_load ; do_warm }
-        end
-
-        do_prepare
         x.report('find') do |times|
           times.times { map.find(random_city) }
         end
 
-        do_prepare
         x.report('put') do |times|
           times.times { map.put(random_city, rand(1<<31)) }
         end
 
-        do_prepare
         x.report('delete') do |times|
           times.times { map.delete(rand(1<<31)) }
         end
 
-        do_prepare
         x.report('stress') do |times|
           times.times do 
             case rand(3)
@@ -129,10 +117,27 @@ module Blurrily
             end
           end
         end
+
+        x.report('save') do |times|
+          times.times do
+            path = Pathname.new "tmp/#{$$}.#{rand(1<<32)}.trigrams"
+            do_save path.to_s
+            path.delete
+          end
+        end
+
+        x.report('load') do |times|
+          times.times { do_close ; do_load }
+        end
+
+        x.report('warm load') do |times|
+          times.times { do_close ; do_load ; do_warm }
+        end
       end
     end
 
     def do_gc
+      Thread.pass
       ObjectSpace.garbage_collect
       GC.start
     end
@@ -150,7 +155,8 @@ module Blurrily
     end
 
     def log(message)
-      puts "[%s] %s: %s" % [Time.now.strftime('%T.%L'), $0, message]
+      $stderr.puts "[%s] %s: %s" % [Time.now.strftime('%T.%L'), $0, message]
+      $stderr.flush
     end
 
     def map
@@ -165,12 +171,15 @@ end
 
 $PROGRAM_NAME = 'blurrily:bench'
 
-# Blurrily::Benchmark.new(:cities).run
-# Blurrily::Benchmark.new(:europe).run
-# Blurrily::Benchmark.new(:us).run
-# Blurrily::Benchmark.new(:world).run
-Blurrily::Benchmark.new(:russia).run
-Blurrily::Benchmark.new(:asia).run
+%i(cities europe russia asia us world).each do |key|
+  bbm = Blurrily::Benchmark.new(key)
+  benchmarks = bbm.run
+  puts "-"*80
+  benchmarks.each do |bm|
+    puts "%s\t%s\t%1.3e" % [key, bm.label, 1e3/bm.ips]
+  end
+  puts "-"*80
+end
 
 __END__
 
