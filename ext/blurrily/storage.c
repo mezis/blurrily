@@ -92,7 +92,7 @@ static int fake_mergesort(void *base, size_t nel, size_t width, int (*compar)(co
 static void* smalloc(size_t nelem, size_t length)
 {
   void* result = malloc(nelem * length);
-  if (result) memset(result, 0xFF, nelem * length);
+  if (result) memset(result, 0xAA, nelem * length);
   return result;
 }
 
@@ -311,7 +311,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   fd = -1;
 
   /* flush data */
-  memset(ptr, 0x00, total_size);
+  memset(ptr, 0xFF, total_size);
 
   /* copy header & clean copy */
   memcpy(ptr, (void*)haystack, sizeof(trigram_map_t));
