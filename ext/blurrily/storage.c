@@ -87,6 +87,17 @@ static int fake_mergesort(void *base, size_t nel, size_t width, int (*compar)(co
 
 /******************************************************************************/
 
+#define SMALLOC(_NELEM,_TYPE) (_TYPE*) smalloc(_NELEM, sizeof(_TYPE))
+
+static void* smalloc(size_t nelem, size_t length)
+{
+  void* result = malloc(nelem * length);
+  if (result) memset(result, 0xFF, nelem * length);
+  return result;
+}
+
+/******************************************************************************/
+
 /* 1 -> little endian, 2 -> big endian */
 static uint8_t get_big_endian()
 {
@@ -170,10 +181,8 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
   int                 k        = 0;
 
   LOG("blurrily_storage_new\n");
-  haystack = (trigram_map) malloc(sizeof(trigram_map_t));
+  haystack = SMALLOC(1, trigram_map_t);
   if (haystack == NULL) return -1;
-
-  memset(haystack, 0x00, sizeof(trigram_map_t));
 
   memcpy(haystack->magic, "trigra", 6);
   haystack->big_endian   = get_big_endian();
@@ -182,11 +191,13 @@ int blurrily_storage_new(trigram_map* haystack_ptr)
   haystack->mapped_size      = 0; /* not mapped, as we just created it in memory */
   haystack->total_references = 0;
   haystack->total_trigrams   = 0;
+  haystack->refs             = NULL;
   for(k = 0, ptr = haystack->map ; k < TRIGRAM_COUNT ; ++k, ++ptr) {
     ptr->buckets = 0;
     ptr->used    = 0;
     ptr->dirty   = 0;
     ptr->entries = (trigram_entry_t*)NULL;
+    ptr->entries_offset = 0;
   }
 
   *haystack_ptr = haystack;
@@ -373,7 +384,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
   if (blurrily_refs_test(haystack->refs, reference)) return 0;
   if (weight <= 0) weight = (uint32_t) length;
 
-  trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
+  trigrams = SMALLOC(length+1, trigram_t);
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
 
 
@@ -390,7 +401,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
       LOG("- alloc for %d\n", t);
 
       map->buckets = TRIGRAM_ENTRIES_START_SIZE;
-      map->entries = (trigram_entry_t*) calloc(map->buckets, sizeof(trigram_entry_t));
+      map->entries = SMALLOC(map->buckets, trigram_entry_t);
     }
     else if (map->used == map->buckets) {
       uint32_t         new_buckets = map->buckets * 4/3;
@@ -398,11 +409,11 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
       LOG("- realloc for %d\n", t);
 
       /* copy old data, free old pointer, zero extra space */
-      new_entries = malloc(new_buckets * sizeof(trigram_entry_t));
+      new_entries = SMALLOC(new_buckets, trigram_entry_t);
       assert(new_entries != NULL);
       memcpy(new_entries, map->entries, map->buckets * sizeof(trigram_entry_t));
       /* scribble the rest of the map*/      
-      memset(new_entries + map->buckets, 0xFF, (new_buckets - map->buckets) * sizeof(trigram_entry_t));
+      // memset(new_entries + map->buckets, 0xFF, (new_buckets - map->buckets) * sizeof(trigram_entry_t));
 
       #ifndef NDEBUG
         /* scribble old data */
@@ -453,7 +464,7 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   uint32_t         last_ref    = (uint32_t)-1;
   int              nb_results  = 0;
 
-  trigrams = (trigram_t*)malloc((length+1) * sizeof(trigram_t));
+  trigrams = SMALLOC(length+1, trigram_t);
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
   if (nb_trigrams == 0) goto cleanup;
 
@@ -468,7 +479,7 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   if (nb_entries == 0) goto cleanup;
 
   /* allocate sorting memory */
-  entries = (trigram_entry_t*) malloc(nb_entries * sizeof(trigram_entry_t));
+  entries = SMALLOC(nb_entries, trigram_entry_t);
   assert(entries != NULL);
   LOG("allocated space for %zd trigrams entries\n", nb_entries);
 
@@ -503,7 +514,7 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   LOG("total %zd distinct matches\n", nb_matches);
 
   /* allocate maches result */
-  matches = (trigram_match_t*) calloc(nb_matches, sizeof(trigram_match_t));
+  matches = SMALLOC(nb_matches, trigram_match_t);
   assert(matches != NULL);
 
   /* reduction, counting matches per reference */
@@ -558,7 +569,10 @@ int blurrily_storage_delete(trigram_map haystack, uint32_t reference)
       entry = map->entries + j;
       if (entry->reference != reference) continue;
 
+      /* swap with the last entry */
       *entry = map->entries[map->used - 1];
+      memset(map->entries + map->used - 1, 0xFF, sizeof(trigram_entry_t));
+
       map->used -= 1;
 
       ++trigrams_deleted;
