@@ -23,6 +23,8 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'pry-nav'
   gem.add_development_dependency 'pry-doc'
   gem.add_development_dependency 'progressbar'
+  gem.add_development_dependency 'benchmark-ips'
+  gem.add_development_dependency 'rusage'
 
   gem.extensions    = ['ext/blurrily/extconf.rb']
   gem.files         = Dir.glob('lib/**/*.rb') +

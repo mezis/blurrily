@@ -1,0 +1,185 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'bundler/setup'
+require 'blurrily'
+require 'progressbar'
+require 'open-uri'
+require 'tempfile'
+require 'benchmark/ips'
+require 'zlib'
+
+
+module Blurrily
+  class Benchmark
+    ARCHIVES = {
+      cities: 'http://mezis.s3.amazonaws.com/blurrily-data/cities1000-filtered.txt.gz',
+      europe: 'http://mezis.s3.amazonaws.com/blurrily-data/de_fr_es_gb_it-filtered.txt.gz',
+      us:     'http://mezis.s3.amazonaws.com/blurrily-data/us-filtered.txt.gz',
+      world:  'http://mezis.s3.amazonaws.com/blurrily-data/allCountries-filtered.txt.gz',
+      russia: 'http://mezis.s3.amazonaws.com/blurrily-data/ru-filtered.txt.gz',
+      asia:   'http://mezis.s3.amazonaws.com/blurrily-data/ru_cn_ir-filtered.txt.gz',
+    }
+
+    SEARCH_CITIES = %w(London Paris Rome Luxembourg) +
+      %w(Lonndon Pari Roma Luxenbour)
+
+    def initialize(key)
+      @source_url = ARCHIVES[key] or raise ArgumentError
+      @key = key
+    end
+
+    def run
+      log "Starting benchmark for '#{key}'"
+      do_download
+      do_import
+      do_save
+      do_bm
+    end
+
+    private
+
+    attr :key, :source_url
+
+    def do_download
+      return if raw_data_path.exist?
+      log 'download and save file'
+      output = Tempfile.new($PROGRAM_NAME)
+      URI.parse(source_url).open do |input|
+        output.write input.read
+      end
+      output.close
+      FileUtils.cp(output.path, raw_data_path.to_s)
+      return
+    end
+
+    def do_import
+      log "Counting data entries"
+      rows = 0
+      get_reader.each_line { |line| rows += 1 }
+
+      log "Importing data"
+      progress = ProgressBar.new(key.to_s, rows)
+      get_reader.each_line do |line|
+        index, needle = line.strip.split("\t")
+        map.put(needle, index.to_i)
+        progress.inc
+      end
+      progress.finish
+      puts "#{rows} records imported, #{map.stats[:references]} refs, #{map.stats[:trigrams]} trigrams"
+      return
+    end
+
+    def do_save(path = nil)
+      path ||= trigram_data_path.to_s
+      map.save path
+    end
+
+    def do_load
+      @map = Map.load(trigram_data_path.to_s)
+    end
+
+    def do_close
+      @map = nil
+      do_gc
+    end
+
+    def do_warm
+      # rehersal, necessary as the hash table will be reconstructed
+      map.put 'foo', 123
+    end
+
+    def do_prepare
+      do_load ; do_warm ; do_gc
+    end
+
+    def do_bm
+      log 'Benchmarking'
+
+      ::Benchmark.ips do |x|
+        x.report('find') do |times|
+          times.times { map.find(random_city) }
+        end
+
+        x.report('put') do |times|
+          times.times { map.put(random_city, rand(1<<31)) }
+        end
+
+        x.report('delete') do |times|
+          times.times { map.delete(rand(1<<31)) }
+        end
+
+        x.report('stress') do |times|
+          times.times do 
+            case rand(3)
+            when 0 then map.delete(rand(1<<31))
+            when 1 then map.put(random_city, rand(1<<31))
+            when 2 then map.find(random_city)
+            end
+          end
+        end
+
+        x.report('save') do |times|
+          times.times do
+            path = Pathname.new "tmp/#{$$}.#{rand(1<<32)}.trigrams"
+            do_save path.to_s
+            path.delete
+          end
+        end
+
+        x.report('load') do |times|
+          times.times { do_close ; do_load }
+        end
+
+        x.report('warm load') do |times|
+          times.times { do_close ; do_load ; do_warm }
+        end
+      end
+    end
+
+    def do_gc
+      Thread.pass
+      ObjectSpace.garbage_collect
+      GC.start
+    end
+
+    def raw_data_path
+      @raw_data_path ||= Pathname.new("#{key}.txt.gz")
+    end
+
+    def trigram_data_path
+      @trigram_data_path ||= Pathname.new("#{key}.trigrams")
+    end
+
+    def get_reader
+      Zlib::GzipReader.open(raw_data_path.to_s)
+    end
+
+    def log(message)
+      $stderr.puts "[%s] %s: %s" % [Time.now.strftime('%T.%L'), $0, message]
+      $stderr.flush
+    end
+
+    def map
+      @map ||= Map.new
+    end
+
+    def random_city
+      SEARCH_CITIES[rand(SEARCH_CITIES.length)]
+    end
+  end
+end
+
+$PROGRAM_NAME = 'blurrily:bench'
+
+%i(cities europe russia asia us world).each do |key|
+  bbm = Blurrily::Benchmark.new(key)
+  benchmarks = bbm.run
+  puts "-"*80
+  benchmarks.each do |bm|
+    puts "%s\t%s\t%1.3e" % [key, bm.label, 1e3/bm.ips]
+  end
+  puts "-"*80
+end
+
+__END__
+
