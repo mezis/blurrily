@@ -277,7 +277,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   }
 
   /* path for temporary file */
-  snprintf(path_tmp, PATH_MAX, "%s.tmp", path);
+  snprintf(path_tmp, PATH_MAX, "%s.tmp.%ld", path, random());
 
   /* compute storage space required */
   total_size += round_to_page(sizeof(trigram_map_t));
