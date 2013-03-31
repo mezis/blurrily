@@ -58,19 +58,19 @@ static int blurrily_compare_trigrams(const void* left_p, const void* right_p)
 
 int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
 {
-  int   length     = strlen(input);
-  char* normalized = (char*) malloc(length+5);
-  int   duplicates = 0;
+  size_t length     = strlen(input);
+  char*  normalized = (char*) malloc(length+5);
+  size_t duplicates = 0;
 
   snprintf(normalized, length+4, "**%s*", input);
 
   /* replace spaces with '*' */
-  for (int k = 0; k < length+3; ++k) {
+  for (size_t k = 0; k < length+3; ++k) {
     if (normalized[k] == ' ') normalized[k] = '*';
   }
 
   /* compute trigrams */
-  for (int k = 0; k <= length; ++k) {
+  for (size_t k = 0; k <= length; ++k) {
     string_to_code(normalized+k, output+k);
   }
 
@@ -78,7 +78,7 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
   LOG("-- normalization\n");
   LOG("%s -> %s\n", input, normalized);
   LOG("-- tokenisation\n");
-  for (int k = 0; k <= length; ++k) {
+  for (size_t k = 0; k <= length; ++k) {
     char res[4];
 
     code_to_string(output[k], res);
@@ -93,7 +93,7 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
   qsort((void*)output, length+1, sizeof(trigram_t), &blurrily_compare_trigrams);
 
   /* remove duplicates */
-  for (int k = 1; k <= length; ++k) {
+  for (size_t k = 1; k <= length; ++k) {
     trigram_t* previous = output + k - 1;
     trigram_t* current  = output + k;
 
@@ -108,14 +108,14 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output)
 
   /* print again */
   LOG("-- after sort/compact\n");
-  for (int k = 0; k <= length-duplicates; ++k) {
+  for (size_t k = 0; k <= length-duplicates; ++k) {
     char res[4];
     code_to_string(output[k], res);
     LOG("%d -> %s\n", output[k], res);
   }
 
   free((void*)normalized);
-  return length+1 - duplicates;
+  return (int) (length + 1 - duplicates);
 }
 
 /******************************************************************************/
