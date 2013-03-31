@@ -203,12 +203,6 @@ void Init_map_ext(void) {
   VALUE module = Qnil;
   VALUE klass  = Qnil;
 
-  /* print patform information */
-  fprintf(stderr, "[blurrily] int size:     %d\n", (int) sizeof(int));
-  fprintf(stderr, "[blurrily] size_t size:  %d\n", (int) sizeof(size_t));
-  fprintf(stderr, "[blurrily] off_t size:   %d\n", (int) sizeof(off_t));
-  fprintf(stderr, "[blurrily] pointer size: %d\n", (int) sizeof(void*));
-
   /* assume we haven't yet defined blurrily */
   module = rb_define_module("Blurrily");
   assert(module != Qnil);
