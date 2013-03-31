@@ -1,4 +1,6 @@
 # encoding: utf-8
+require 'blurrily/map_group'
+require 'blurrily/defaults'
 
 module Blurrily
   class CommandProcessor

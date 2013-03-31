@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'blurrily/command_processor'
 
 describe Blurrily::CommandProcessor do
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'blurrily'
+require "blurrily/server"
 require 'optparse'
 require 'ostruct'
 

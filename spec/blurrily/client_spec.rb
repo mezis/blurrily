@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'spec_helper'
+require "blurrily/client"
 require 'pathname'
 
 describe Blurrily::Client do

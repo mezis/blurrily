@@ -1,4 +1,5 @@
 require 'pathname'
+require 'blurrily/map'
 
 module Blurrily
   class MapGroup

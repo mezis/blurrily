@@ -2,6 +2,7 @@
 
 require 'socket'
 require 'ipaddr'
+require 'blurrily/defaults'
 
 module Blurrily
   class Client
@@ -26,9 +27,9 @@ module Blurrily
     #
     # Returns the instance of Blurrily::Client
     def initialize(options = {})
-      @host    = options.fetch(:host,     Blurrily::DEFAULT_HOST)
-      @port    = options.fetch(:port,     Blurrily::DEFAULT_PORT)
-      @db_name = options.fetch(:db_name,  Blurrily::DEFAULT_DATABASE)
+      @host    = options.fetch(:host,     DEFAULT_HOST)
+      @port    = options.fetch(:port,     DEFAULT_PORT)
+      @db_name = options.fetch(:db_name,  DEFAULT_DATABASE)
     end
 
     # Public: Find record references based on a given string (needle)

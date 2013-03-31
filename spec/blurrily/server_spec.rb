@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'pathname'
 require 'eventmachine'
 require 'socket'
+require "blurrily/server"
 
 describe Blurrily::Server do
   context 'running server' do

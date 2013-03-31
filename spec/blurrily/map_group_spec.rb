@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 require 'spec_helper'
+require 'blurrily/map_group'
 
 describe Blurrily::MapGroup do
   subject { described_class.new('.') }

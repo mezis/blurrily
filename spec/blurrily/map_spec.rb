@@ -2,6 +2,7 @@
 
 require 'spec_helper'
 require 'pathname'
+require "blurrily/map"
 
 describe Blurrily::Map do
   subject { described_class.new }

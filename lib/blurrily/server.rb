@@ -1,4 +1,6 @@
 require 'eventmachine'
+require 'blurrily/defaults'
+require 'blurrily/command_processor'
 
 module Blurrily
   class Server
