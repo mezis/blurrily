@@ -32,7 +32,8 @@ Gem::Specification.new do |gem|
   gem.extensions    = ['ext/blurrily/extconf.rb']
   gem.files         = Dir.glob('lib/**/*.rb') +
                       Dir.glob('ext/**/*.{c,h,rb}') +
-                      Dir.glob('*.{md,txt}')
+                      Dir.glob('*.{md,txt}') +
+                      Dir.glob('bin/blurrily')
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]

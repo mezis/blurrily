@@ -1,10 +1,10 @@
-require 'fileutils'
+require 'pathname'
 
 module Blurrily
   class MapGroup
 
     def initialize(directory)
-      @directory = directory
+      @directory = Pathname.new(directory)
       @maps = {}
     end
 
@@ -13,7 +13,7 @@ module Blurrily
     end
 
     def save
-      FileUtils.makedirs(@directory) unless File.directory?(@directory)
+      @directory.mkpath
       @maps.each do |name, map|
         map.save(map_path(name))
       end

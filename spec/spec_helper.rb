@@ -1,8 +1,6 @@
 require 'blurrily'
 require 'socket'
  
-TCP_NEW = TCPSocket.method(:new) unless defined? TCP_NEW
- 
 #
 # Example:
 #   mock_tcp_next_request("<xml>junk</xml>")
@@ -22,13 +20,16 @@ class FakeTCPSocket
 end
  
 def mock_tcp_next_request(string, client_expectation = nil) 
-  TCPSocket.stub!(:new).and_return {
-    cm = FakeTCPSocket.new
-    cm.set_canned(string)
-    cm.should_receive(:put).with(client_expectation) unless client_expectation.nil?
-    cm
-  }
+  TCPSocket.stub!(:new).and_return do
+    FakeTCPSocket.new.tap do |fake_socket|
+      fake_socket.set_canned(string)
+      fake_socket.
+        should_receive(:put).
+        with(client_expectation) unless client_expectation.nil?
+    end
+  end
 end
+
 
 RSpec.configure do |config|
   config.before(:each) do
@@ -37,6 +38,7 @@ RSpec.configure do |config|
   config.after(:each) do
   end
 end
+
 
 Pathname.class_eval do
   def md5sum

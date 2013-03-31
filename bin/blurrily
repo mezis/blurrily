@@ -35,5 +35,6 @@ end
 
 parser.parse!(ARGV)
 
+$PROGRAM_NAME = 'blurrily'
 puts "Starting Blurrily Server v#{Blurrily::VERSION} in directory: '#{options.dir}' on #{options.host}:#{options.port}"
 Blurrily::Server.new(:host => options.host, :port => options.port, :directory => options.directory).start

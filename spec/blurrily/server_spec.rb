@@ -9,7 +9,7 @@ describe Blurrily::Server do
   context 'running server' do
     before :all do
       @host = '0.0.0.0'
-      @directory = '.'
+      @directory = 'tmp/data'
       @server, @port, @thread = try_to_start_server(@host, @directory)
     end
 
@@ -33,7 +33,7 @@ describe Blurrily::Server do
   def try_to_start_server(host, directory)
     result = 5.times do
       port = random_port
-      server = described_class.new({ :host => host, :port => port, :directory => directory })
+      server = described_class.new(:host => host, :port => port, :directory => directory)
       thread = Thread.new { server.start }
       started = 3.times do |i|
         sleep 0.01 * 14 ** i

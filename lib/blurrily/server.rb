@@ -4,9 +4,10 @@ module Blurrily
   class Server
 
     def initialize(options)
-      @host, @port, @directory = options[:host], options[:port], options[:directory]
-      raise ArgumentError if [@host, @port, @directory].any?(&:nil?)
-      @command_processor = CommandProcessor.new(@directory)
+      @host      = options.fetch(:host,      '0.0.0.0')
+      @port      = options.fetch(:port,      Blurrily::DEFAULT_PORT)
+      directory  = options.fetch(:directory, Dir.pwd)
+      @command_processor = CommandProcessor.new(directory)
     end
 
     def start
@@ -15,7 +16,7 @@ module Blurrily
         Signal.trap("INT")  { EventMachine.stop }
         Signal.trap("TERM") { EventMachine.stop }
 
-        EventMachine.start_server @host, @port, Handler, @command_processor
+        EventMachine.start_server(@host, @port, Handler, @command_processor)
       end
     end
 
@@ -26,7 +27,9 @@ module Blurrily
 
       def receive_data(data)
         data.split("\n").each do |line|
-          send_data("#{@processor.process_command(line.strip)}\n")
+          output = @processor.process_command(line.strip)
+          output << "\n"
+          send_data(output)
         end
       end
     end
