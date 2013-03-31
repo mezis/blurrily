@@ -5,7 +5,11 @@ SHARED_FLAGS = "-DPLATFORM_#{PLATFORM} --std=c99 -Wall -Wextra -Werror"
 
 case PLATFORM
 when 'LINUX'
-  SHARED_FLAGS += ' -D_XOPEN_SOURCE=500' # for ftruncate to be present
+  # make sure ftruncate is available
+  SHARED_FLAGS << ' -D_XOPEN_SOURCE=700'
+  SHARED_FLAGS << ' -D_GNU_SOURCE=1'
+  # make sure off_t is 64 bit long
+  SHARED_FLAGS << ' -D_FILE_OFFSET_BITS=64'
 end
 
 # production
