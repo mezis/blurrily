@@ -228,5 +228,6 @@ void Init_map_ext(void) {
   rb_define_method(klass, "save",       blurrily_save,       1);
   rb_define_method(klass, "find",       blurrily_find,       2);
   rb_define_method(klass, "stats",      blurrily_stats,      0);
+  rb_define_method(klass, "close",      blurrily_close,      0);
   return;
 }

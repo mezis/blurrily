@@ -75,21 +75,14 @@ module Blurrily
     end
 
     def do_load
+      @map.close
       @map = Map.load(trigram_data_path.to_s)
-    end
-
-    def do_close
-      @map = nil
       do_gc
     end
 
     def do_warm
-      # rehersal, necessary as the hash table will be reconstructed
+      # rehersal, necessary as the hash table of refs will be reconstructed
       map.put 'foo', 123
-    end
-
-    def do_prepare
-      do_load ; do_warm ; do_gc
     end
 
     def do_bm
@@ -127,11 +120,11 @@ module Blurrily
         end
 
         x.report('load') do |times|
-          times.times { do_close ; do_load }
+          times.times { do_load }
         end
 
         x.report('warm load') do |times|
-          times.times { do_close ; do_load ; do_warm }
+          times.times { do_load ; do_warm }
         end
       end
     end
