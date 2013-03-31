@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require 'blurrily'
+require 'optparse'
+require 'ostruct'
+
+options = OpenStruct.new
+
+# Defaults
+options.port = 12021
+options.directory  = '.'
+options.host = '0.0.0.0'
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: blurrily-server [options]"
+
+  opts.on("-p", "--port <PORT>", "Bind to PORT, defaults to 12021") do |port|
+    puts 'Port has to be numeric value' and exit unless port =~ /\d+/
+    options.port = port.to_i
+  end
+
+  opts.on("-d", "--directory <DIRECTORY>", "Work in DIRECTORY, defaults to .") do |directory|
+    options.directory = directory
+  end
+
+  opts.on("-b", "--bind <ADDRESS>", "Bind to ADDRESS, defaults to 0.0.0.0") do |address|
+    options.host = address || '0.0.0.0'
+  end
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+end
+
+parser.parse!(ARGV)
+
+puts "Starting Blurrily Server v#{Blurrily::VERSION} in directory: '#{options.dir}' on #{options.host}:#{options.port}"
+Blurrily::Server.new(:host => options.host, :port => options.port, :directory => options.directory).start
