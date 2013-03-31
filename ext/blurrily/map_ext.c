@@ -4,6 +4,7 @@
 #include "blurrily.h"
 
 static VALUE eClosedError = Qnil;
+static VALUE eBlurrilyModule = Qnil;
 
 /******************************************************************************/
 
@@ -138,9 +139,12 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
   if (raise_if_closed(self)) return Qnil;
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
-  if (limit <= 0) { limit = 10 ; }
+  if (limit <= 0) {
+    // rb_limit = rb_const_get(eBlurrilyModule, rb_intern('LIMIT_DEFAULT'));
+    rb_limit = rb_const_get(eBlurrilyModule, rb_intern("LIMIT_DEFAULT"));
+    limit = NUM2UINT(rb_limit);
+  }
   matches = (trigram_match) malloc(limit * sizeof(trigram_match_t));
-
 
   res = blurrily_storage_find(haystack, needle, limit, matches);
   assert(res >= 0);
@@ -200,14 +204,13 @@ static VALUE blurrily_close(VALUE self)
 /******************************************************************************/
 
 void Init_map_ext(void) {
-  VALUE module = Qnil;
   VALUE klass  = Qnil;
 
   /* assume we haven't yet defined blurrily */
-  module = rb_define_module("Blurrily");
-  assert(module != Qnil);
+  eBlurrilyModule = rb_define_module("Blurrily");
+  assert(eBlurrilyModule != Qnil);
 
-  klass = rb_define_class_under(module, "Map", rb_cObject);
+  klass = rb_define_class_under(eBlurrilyModule, "Map", rb_cObject);
   assert(klass != Qnil);
 
   eClosedError = rb_define_class_under(klass, "ClosedError", rb_eRuntimeError);
