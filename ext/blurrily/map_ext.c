@@ -3,6 +3,22 @@
 #include "storage.h"
 #include "blurrily.h"
 
+static VALUE eClosedError = Qnil;
+
+/******************************************************************************/
+
+static int raise_if_closed(VALUE self)
+{
+  if (rb_ivar_get(self, rb_intern("@closed")) != Qtrue) return 0;
+  rb_raise(eClosedError, "Map was freed");
+  return 1;
+}
+
+static void mark_as_closed(VALUE self)
+{
+  rb_ivar_set(self, rb_intern("@closed"), Qtrue);
+}
+
 /******************************************************************************/
 
 static void blurrily_free(void* haystack)
@@ -68,6 +84,7 @@ static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE
   uint32_t     reference = NUM2UINT(rb_reference);
   uint32_t     weight    = NUM2UINT(rb_weight);
 
+  if (raise_if_closed(self)) return Qnil;
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_put(haystack, needle, reference, weight);
@@ -83,6 +100,7 @@ static VALUE blurrily_delete(VALUE self, VALUE rb_reference) {
   uint32_t     reference = NUM2UINT(rb_reference);
   int          res       = -1;
 
+  if (raise_if_closed(self)) return Qnil;
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_delete(haystack, reference);
@@ -98,6 +116,7 @@ static VALUE blurrily_save(VALUE self, VALUE rb_path) {
   int          res       = -1;
   const char*  path      = StringValuePtr(rb_path);
 
+  if (raise_if_closed(self)) return Qnil;
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_save(haystack, path);
@@ -116,10 +135,12 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
   trigram_match matches    = NULL;
   VALUE         rb_matches = Qnil;
 
+  if (raise_if_closed(self)) return Qnil;
+  Data_Get_Struct(self, struct trigram_map_t, haystack);
+
   if (limit <= 0) { limit = 10 ; }
   matches = (trigram_match) malloc(limit * sizeof(trigram_match_t));
 
-  Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_find(haystack, needle, limit, matches);
   assert(res >= 0);
@@ -146,6 +167,7 @@ static VALUE blurrily_stats(VALUE self)
   VALUE           result   = rb_hash_new();
   int             res      = -1;
 
+  if (raise_if_closed(self)) return Qnil;
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
   res = blurrily_storage_stats(haystack, &stats);
@@ -155,6 +177,24 @@ static VALUE blurrily_stats(VALUE self)
   (void) rb_hash_aset(result, ID2SYM(rb_intern("trigrams")),   UINT2NUM(stats.trigrams));
 
   return result;
+}
+
+/******************************************************************************/
+
+static VALUE blurrily_close(VALUE self)
+{
+  trigram_map     haystack = (trigram_map)NULL;
+  int             res      = -1;
+
+  if (raise_if_closed(self)) return Qnil;
+  Data_Get_Struct(self, struct trigram_map_t, haystack);
+
+  res = blurrily_storage_close(&haystack);
+  if (res < 0) rb_sys_fail(NULL);
+
+  DATA_PTR(self) = NULL;
+  mark_as_closed(self);
+  return Qnil;
 }
 
 /******************************************************************************/
@@ -170,6 +210,9 @@ void Init_map_ext(void) {
   klass = rb_define_class_under(module, "Map", rb_cObject);
   assert(klass != Qnil);
 
+  eClosedError = rb_define_class_under(klass, "ClosedError", rb_eRuntimeError);
+  assert(klass != Qnil);
+
   rb_define_singleton_method(klass, "new",  blurrily_new,  0);
   rb_define_singleton_method(klass, "load", blurrily_load, 1);
 
@@ -179,5 +222,6 @@ void Init_map_ext(void) {
   rb_define_method(klass, "save",       blurrily_save,       1);
   rb_define_method(klass, "find",       blurrily_find,       2);
   rb_define_method(klass, "stats",      blurrily_stats,      0);
+  rb_define_method(klass, "close",      blurrily_close,      0);
   return;
 }

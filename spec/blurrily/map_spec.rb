@@ -268,89 +268,127 @@ describe Blurrily::Map do
 
     it 'raises an exception when the file does not exist' do
       path.delete_if_exists
-      expect { subject }.to raise_exception
+      expect { subject }.to raise_exception(Errno::ENOENT)
+    end
+
+    it 'raises an exception if the file is incorrect' do
+      path.delete_if_exists
+      path.open('w') { |io| io.write 'foo' }
+      expect { subject }.to raise_exception(Errno::EPROTO)
+    end
+
+    it 'raises an exception if the file is corrupt' do
+      path.truncate(128) # leave the magic in, but make it the wrong size
+      expect { subject }.to raise_exception(Errno::EPROTO)
+    end
+  end
+
+  describe '#close' do
+    let(:closed_error) { described_class::ClosedError }
+    context 'after calling #close' do
+      before { subject.close }
+
+      it '#close fails' do
+        expect { subject.close }.to raise_exception(closed_error)
+      end
+
+      it '#put fails' do
+        expect { subject.put('london', 123) }.to raise_exception(closed_error)
+      end
+
+      it '#find fails' do
+        expect { subject.find('london') }.to raise_exception(closed_error)
+      end
+
+      it '#save fails' do
+        expect { subject.save('foo') }.to raise_exception(closed_error)
+      end
     end
   end
 
   describe 'stress check' do
-    let(:count) { 1024 } # enough cycles to force reallocations
     let(:path) { Pathname.new "tmp/#{$$}.trigrams" }
 
     after { path.delete if path.exist? }
 
-    it 'many puts' do
-      count.times { |index| subject.put 'Port-au-Prince', index }
-      subject.stats[:references].should == count
-      subject.find('Port-au-Prince').should_not be_empty
-    end
+    context 'with 1k iterations' do
+      let(:count) { 1024 } # enough cycles to force reallocations
 
-    it 'many put/delete/find' do
-      count.times do |index|
-        subject.put 'Port-au-Prince', index
-        subject.delete index
+      it 'puts' do
+        count.times { |index| subject.put 'Port-au-Prince', index }
+        subject.stats[:references].should == count
+        subject.find('Port-au-Prince').should_not be_empty
+      end
+
+      it 'put/delete/find' do
+        count.times do |index|
+          subject.put 'Port-au-Prince', index
+          subject.delete index
+          subject.stats.should == { references:0, trigrams:0 }
+          subject.find('Port-au-Prince').should be_empty
+        end
+      end
+
+      it 'put/find/delete' do
+        count.times do |index|
+          subject.put 'Port-au-Prince', index
+          subject.stats[:references].should == 1
+          subject.find('Port-au-Prince').first.first.should == index
+          subject.delete index
+        end
+      end
+
+      it 'puts, many deletes' do
+        count.times { |index| subject.put 'Port-au-Prince', index }
+        count.times { |index| subject.delete index }
+        subject.stats.should == { references:0, trigrams:0 }
+        subject.find('Port-au-Prince').should be_empty
+      end
+
+      it 'puts, reload, many deletes' do
+        count.times { |index| subject.put 'Port-au-Prince', index }
+
+        subject.save(path.to_s)
+        subject = described_class.load(path.to_s)
+
+        count.times { |index| subject.delete index }
         subject.stats.should == { references:0, trigrams:0 }
         subject.find('Port-au-Prince').should be_empty
       end
     end
 
-    it 'many put/find/delete' do
-      count.times do |index|
-        subject.put 'Port-au-Prince', index
-        subject.stats[:references].should == 1
-        subject.find('Port-au-Prince').first.first.should == index
-        subject.delete index
+    context 'with 100 iterations' do
+      let(:count) { 100 }
+      it 'cold loads' do
+        count.times { |index| subject.put 'Port-au-Prince', index }
+        subject.save(path.to_s)
+
+        count.times do
+          described_class.load(path.to_s)
+        end
+      end
+
+      it 'put/save/load/delete' do
+        map = subject
+        count.times do |index|
+          map.put 'Port-au-Prince', index
+          map.save(path.to_s)
+          map = described_class.load(path.to_s)
+          map.delete(index)
+          map.stats[:references].should == 0
+        end
+      end
+
+      it 'put/save/load' do
+        map = subject
+        count.times do |index|
+          map.put 'Port-au-Prince', index
+          map.save(path.to_s)
+          map = described_class.load(path.to_s)
+          map.stats[:references].should == index+1 # index starts from 0
+        end
       end
     end
-
-    it 'many puts, many deletes' do
-      count.times { |index| subject.put 'Port-au-Prince', index }
-      count.times { |index| subject.delete index }
-      subject.stats.should == { references:0, trigrams:0 }
-      subject.find('Port-au-Prince').should be_empty
-    end
-
-    it 'many puts, reload, many deletes' do
-      count.times { |index| subject.put 'Port-au-Prince', index }
-
-      subject.save(path.to_s)
-      subject = described_class.load(path.to_s)
-
-      count.times { |index| subject.delete index }
-      subject.stats.should == { references:0, trigrams:0 }
-      subject.find('Port-au-Prince').should be_empty
-    end
-
-    it 'many cold loads' do
-      count.times { |index| subject.put 'Port-au-Prince', index }
-      subject.save(path.to_s)
-
-      count.times do
-        described_class.load(path.to_s)
-      end
-    end
-
-    it 'many put/save/load/delete' do
-      map = subject
-      count.times do |index|
-        map.put 'Port-au-Prince', index
-        map.save(path.to_s)
-        map = described_class.load(path.to_s)
-        map.delete(index)
-        map.stats[:references].should == 0
-      end
-    end
-
-    it 'many put/save/load' do
-      map = subject
-      count.times do |index|
-        map.put 'Port-au-Prince', index
-        map.save(path.to_s)
-        map = described_class.load(path.to_s)
-        map.stats[:references].should == index+1 # index starts from 0
-      end
-    end
-
-
   end
 
 end
