@@ -272,6 +272,29 @@ describe Blurrily::Map do
     end
   end
 
+  describe '#close' do
+    let(:closed_error) { described_class::ClosedError }
+    context 'after calling #close' do
+      before { subject.close }
+
+      it '#close fails' do
+        expect { subject.close }.to raise_exception(closed_error)
+      end
+
+      it '#put fails' do
+        expect { subject.put('london', 123) }.to raise_exception(closed_error)
+      end
+
+      it '#find fails' do
+        expect { subject.find('london') }.to raise_exception(closed_error)
+      end
+
+      it '#save fails' do
+        expect { subject.save('foo') }.to raise_exception(closed_error)
+      end
+    end
+  end
+
   describe 'stress check' do
     let(:path) { Pathname.new "tmp/#{$$}.trigrams" }
 
