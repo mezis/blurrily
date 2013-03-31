@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -49,7 +50,7 @@ struct PACKED_STRUCT trigram_entries_t
   uint32_t         used;
 
   trigram_entry_t* entries;         /* set when the structure is in memory */
-  size_t           entries_offset;  /* set when the structure is on disk */
+  off_t            entries_offset;  /* set when the structure is on disk */
 
   uint8_t          dirty;           /* not optimised (presorted) yet */
 };
@@ -221,11 +222,32 @@ int blurrily_storage_load(trigram_map* haystack, const char* path)
   res = fstat(fd, &metadata);
   if (res < 0) goto cleanup;
 
+  /* check this file is at least lng enough to have a header */
+  if (metadata.st_size < (off_t) sizeof(trigram_map_t)) {
+    errno = EPROTO;
+    res = -1;
+    goto cleanup;
+  }
+
   header = (trigram_map) mmap(NULL, metadata.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
-  assert(header != NULL);
+  if (header == MAP_FAILED) {
+    res = -1;
+    header = NULL;
+    goto cleanup;
+  }
+
+  /* fd not needed once mapping established */
+  res = close(fd);
+  if (res < 0) goto cleanup;
+  fd = -1;
 
   /* check magic */
-  /* TODO */
+  res = memcmp(header->magic, "trigra", 6);
+  if (res != 0 || header->big_endian != get_big_endian() || header->pointer_size != get_pointer_size()) {
+    errno = EPROTO;
+    res = -1;
+    goto cleanup;
+  }
 
   /* fix header data */
   header->mapped_size = metadata.st_size;
@@ -239,6 +261,7 @@ int blurrily_storage_load(trigram_map* haystack, const char* path)
 
 cleanup:
   if (fd > 0) (void) close(fd);
+  if (res < 0 && header != NULL) (void) munmap(header, metadata.st_size);
   return res;
 }
 
@@ -247,7 +270,7 @@ cleanup:
 int blurrily_storage_close(trigram_map* haystack_ptr)
 {
   trigram_map         haystack = *haystack_ptr;
-  int                 res      = -1;
+  int                 res      = 0;
   trigram_entries_t*  ptr = haystack->map;
 
   LOG("blurrily_storage_close\n");
@@ -261,13 +284,14 @@ int blurrily_storage_close(trigram_map* haystack_ptr)
 
   if (haystack->mapped_size) {
     res = munmap(haystack, haystack->mapped_size);
-    assert(res >= 0);
+    if (res < 0) goto cleanup;
   } else {
     free(haystack);
   }
 
+cleanup:
   *haystack_ptr = NULL;
-  return 0;
+  return res;
 }
 
 /******************************************************************************/
@@ -305,7 +329,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path)
   if (res < 0) goto cleanup;
 
   ptr = mmap(NULL, total_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-  if (ptr == NULL) { res = -1 ; goto cleanup ; }
+  if (ptr == MAP_FAILED) { res = -1 ; goto cleanup ; }
 
   (void) close(fd);
   fd = -1;

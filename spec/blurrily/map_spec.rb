@@ -268,7 +268,18 @@ describe Blurrily::Map do
 
     it 'raises an exception when the file does not exist' do
       path.delete_if_exists
-      expect { subject }.to raise_exception
+      expect { subject }.to raise_exception(Errno::ENOENT)
+    end
+
+    it 'raises an exception if the file is incorrect' do
+      path.delete_if_exists
+      path.open('w') { |io| io.write 'foo' }
+      expect { subject }.to raise_exception(Errno::EPROTO)
+    end
+
+    it 'raises an exception if the file is corrupt' do
+      path.truncate(128) # leave the magic in, but make it the wrong size
+      expect { subject }.to raise_exception(Errno::EPROTO)
     end
   end
 
