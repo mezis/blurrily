@@ -1,5 +1,6 @@
 require 'blurrily/map_ext'
-require 'active_support/all' # fixme: we only need enough to get mb_chars and alias_method_chain in
+require 'active_support/core_ext/module/aliasing' # alias_method_chain
+require 'active_support/core_ext/string/multibyte' # mb_chars
 
 module Blurrily
   Map.class_eval do
@@ -26,7 +27,8 @@ module Blurrily
     def normalize_string(needle)
       result = needle.downcase
       unless result =~ /^([a-z ])+$/
-        result = result.mb_chars.normalize(:kd).gsub(/[^\x00-\x7F]/,'').to_s.gsub(/[^a-z]/,' ')
+        result = ActiveSupport::Multibyte::Chars.new(result).mb_chars.normalize(:kd).gsub(/[^\x00-\x7F]/,'').to_s.gsub(/[^a-z]/,' ')
+        # result = result.mb_chars.normalize(:kd).gsub(/[^\x00-\x7F]/,'').to_s.gsub(/[^a-z]/,' ')
       end
       result.gsub(/\s+/,' ').strip
     end

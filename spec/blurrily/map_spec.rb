@@ -328,7 +328,7 @@ describe Blurrily::Map do
         count.times do |index|
           subject.put 'Port-au-Prince', index
           subject.delete index
-          subject.stats.should == { references:0, trigrams:0 }
+          subject.stats.should == { :references => 0, :trigrams => 0 }
           subject.find('Port-au-Prince').should be_empty
         end
       end
@@ -345,7 +345,7 @@ describe Blurrily::Map do
       it 'puts, many deletes' do
         count.times { |index| subject.put 'Port-au-Prince', index }
         count.times { |index| subject.delete index }
-        subject.stats.should == { references:0, trigrams:0 }
+        subject.stats.should == { :references => 0, :trigrams => 0 }
         subject.find('Port-au-Prince').should be_empty
       end
 
@@ -356,7 +356,7 @@ describe Blurrily::Map do
         subject = described_class.load(path.to_s)
 
         count.times { |index| subject.delete index }
-        subject.stats.should == { references:0, trigrams:0 }
+        subject.stats.should == { :references => 0, :trigrams => 0 }
         subject.find('Port-au-Prince').should be_empty
       end
     end
