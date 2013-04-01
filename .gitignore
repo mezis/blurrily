@@ -16,3 +16,6 @@ Makefile
 # CTags
 .tags
 .tags_sorted_by_file
+
+# Mac turds
+.DS_Store
