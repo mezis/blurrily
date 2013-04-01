@@ -184,18 +184,21 @@ describe Blurrily::Map do
     end
 
     let(:wordsize_byte) do
-      case RUBY_PLATFORM
-      when /x86_64/    then "\u0008"
-      when /i[3-6]86/  then "\u0004"
+      case ['foo'].pack('p').size # size of pointer to string
+      when 8 then "\x08"
+      when 4 then "\x04"
       else raise 'unknown platform'
       end
     end
 
     let(:big_endian_byte) do
-      case RUBY_PLATFORM
-      when /x86|i[3-6]86/ then "\u0001"
-      when /ppc|arm/      then "\u0002"
-      else raise 'unknown platform'
+      bytes = [0xAABB].pack('S').bytes.to_a
+      if bytes == [0xBB, 0xAA]
+        "\x01"
+      elsif bytes == [0xAA, 0xBB]
+        "\x02"
+      else
+        raise 'unknown platform'
       end
     end
 
@@ -226,8 +229,8 @@ describe Blurrily::Map do
       perform
       header = path.read(8)
       header[0,6].should == "trigra"
-      header[6].should == big_endian_byte
-      header[7].should == wordsize_byte
+      header[6,1].should == big_endian_byte
+      header[7,1].should == wordsize_byte
     end
 
     it 'is idempotent' do
