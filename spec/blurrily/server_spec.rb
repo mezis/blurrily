@@ -8,50 +8,68 @@ require "blurrily/server"
 
 describe Blurrily::Server do
   context 'running server' do
-    before :all do
-      @host = '0.0.0.0'
-      @directory = 'tmp/data'
-      @server, @port, @thread = try_to_start_server(@host, @directory)
+    let(:socket) { TCPSocket.new(host, @port) }
+    let(:directory) { 'tmp/data' }
+    let(:host) { 'localhost' }
+
+    before do
+      @port, @pid = try_to_start_server(directory)
     end
 
-    after :all do
-      @thread.kill if @thread
-    end
-
-    it 'responds and closes connection' do
-      Timeout::timeout(1) do
-        socket = TCPSocket.new(@host, @port)
-        socket.puts 'Who is most beautiful in the world?'
-        socket.gets.should =~ /ERROR\tUnknown command/
+    after do
+      if @pid
+        Process.kill('KILL', @pid)
+        Process.wait
       end
     end
+
+    after do
+      FileUtils.rm_rf(directory)
+    end
+
+    it 'responds' do
+      socket.puts 'Who is most beautiful in the world?'
+      socket.gets.should =~ /^ERROR\tUnknown command/
+    end
+
+    it 'does not close the connection' do
+      3.times { socket.puts 'Bad command' }
+      3.times { socket.gets.should =~ /^ERROR/ }
+    end
+
+    it 'saves when quitting' do
+      socket = TCPSocket.new('localhost', @port)
+      socket.puts("PUT\twords\tmerveilleux\t1")
+      socket.gets
+      socket.close
+
+      Process.kill('TERM', @pid)
+      Process.wait(@pid)
+      @pid = nil
+      Pathname.new(directory).join('words.trigrams').should exist
+    end
   end
 
-  def random_port
-    (10000 + rand * 54000).to_i
-  end
-
-  def try_to_start_server(host, directory)
-    result = 5.times do
-      port = random_port
-      server = described_class.new(:host => host, :port => port, :directory => directory)
-      thread = Thread.new { server.start }
-      started = 3.times do |i|
-        sleep 0.01 * 14 ** i
-        next unless thread.alive?
-        connection = begin
-          TCPSocket.new(host, port)
-        rescue Errno::ECONNREFUSED
-          nil
-        end
-        if connection
-          connection.close
+  def try_to_start_server(directory)
+    result = 10.times do
+      port = (1024 + rand(32768-1024))
+      pid = fork do
+        described_class.new(:port => port, :directory => directory).start
+        Kernel.exit 0
+      end
+      started = 10.times do |i|
+        sleep 50e-3
+        begin
+          TCPSocket.new(host, port).close
           break true
+        rescue Errno::ECONNREFUSED
+          next
         end
       end
-      break [server, port, thread] if started == true
+      return [port, pid] if started == true
+      Process.kill('KILL', pid)
+      Process.detach(pid)
     end
-    raise 'Could not start server' if result.is_a?(Fixnum)
-    result
+    raise 'Could not start server'
   end
 end

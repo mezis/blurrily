@@ -1,6 +1,7 @@
 require 'eventmachine'
 require 'blurrily/defaults'
 require 'blurrily/command_processor'
+require 'blurrily/map_group'
 
 module Blurrily
   class Server
@@ -9,7 +10,9 @@ module Blurrily
       @host      = options.fetch(:host,      '0.0.0.0')
       @port      = options.fetch(:port,      Blurrily::DEFAULT_PORT)
       directory  = options.fetch(:directory, Dir.pwd)
-      @command_processor = CommandProcessor.new(directory)
+
+      @map_group = MapGroup.new(directory)
+      @command_processor = CommandProcessor.new(@map_group)
     end
 
     def start
@@ -18,9 +21,16 @@ module Blurrily
         Signal.trap("INT")  { EventMachine.stop }
         Signal.trap("TERM") { EventMachine.stop }
 
+        saver = @map_group.method(:save)
+        EventMachine.add_periodic_timer(60, &saver)
+        EventMachine.add_shutdown_hook(&saver)
+        Signal.trap("USR1", &saver)
+
         EventMachine.start_server(@host, @port, Handler, @command_processor)
       end
     end
+
+    private
 
     module Handler
       def initialize(processor)

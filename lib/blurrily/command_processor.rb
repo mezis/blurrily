@@ -1,13 +1,12 @@
 # encoding: utf-8
-require 'blurrily/map_group'
 require 'blurrily/defaults'
 
 module Blurrily
   class CommandProcessor
     ProtocolError = Class.new(StandardError)
 
-    def initialize(directory)
-      @map_group = MapGroup.new(directory)
+    def initialize(map_group)
+      @map_group = map_group
     end
 
     def process_command(line)
