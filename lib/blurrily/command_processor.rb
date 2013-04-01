@@ -21,13 +21,20 @@ module Blurrily
 
     private
 
-    COMMANDS = %w(FIND PUT CLEAR)
+    COMMANDS = %w(FIND PUT DELETE CLEAR)
 
     def on_PUT(map_name, needle, ref, weight = nil)
       raise ProtocolError, 'Invalid reference' unless ref =~ /^\d+$/ && REF_RANGE.include?(ref.to_i)
       raise ProtocolError, 'Invalid weight'    unless weight.nil? || (weight =~ /^\d+$/ && WEIGHT_RANGE.include?(weight.to_i))
 
       @map_group.map(map_name).put(*[needle, ref.to_i, weight.to_i].compact)
+      return
+    end
+
+    def on_DELETE(map_name, ref)
+      raise ProtocolError, 'Invalid reference' unless ref =~ /^\d+$/ && REF_RANGE.include?(ref.to_i)
+
+      @map_group.map(map_name).delete(ref.to_i)
       return
     end
 

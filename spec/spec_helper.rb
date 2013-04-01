@@ -14,7 +14,7 @@ class FakeTCPSocket
   end
   
   def gets
-    @canned_response.dup
+    "#{@canned_response}\n"
   end
 end
  
