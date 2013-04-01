@@ -1,10 +1,10 @@
 require 'spec_helper'
 require 'blurrily/command_processor'
+require 'blurrily/map_group'
 
 describe Blurrily::CommandProcessor do
 
-  let(:directory) { '.' }
-  subject { described_class.new(directory) }
+  subject { described_class.new(Blurrily::MapGroup.new) }
 
   describe '#process_command' do
     # Accepts input strings:

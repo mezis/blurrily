@@ -4,8 +4,8 @@ require 'blurrily/map'
 module Blurrily
   class MapGroup
 
-    def initialize(directory)
-      @directory = Pathname.new(directory)
+    def initialize(directory = nil)
+      @directory = Pathname.new(directory || Dir.pwd)
       @maps = {}
     end
 
