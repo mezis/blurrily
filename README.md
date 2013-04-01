@@ -9,9 +9,10 @@
 > Here aresome photos of **Marrakesh**, Morroco.
 > Did you mean **Martanesh**, Albania, **Marakkanam**, India, or **Marasheshty**, Romania?
 
-Blurrily find missplet or partial needles in a haystack of strings, quickly.
-It scales well: its response time is typically 1-2ms on user-input datasets
-and 75-100ms on pathological datasets ([more](#Benchmarks)).
+Blurrily finds misspelled, prefix, or partial needles in a haystack of
+strings, quickly. It scales well: its response time is typically 1-2ms on
+user-input datasets and 75-100ms on pathological datasets
+([more](#benchmarks)).
 
 Blurrily is compatible and tested with all MRI Rubies from 1.8.7 to 2.0.0.
 It is tested on Linux 2.6 (32bit and 64bit) and MacOS X 10.8.
