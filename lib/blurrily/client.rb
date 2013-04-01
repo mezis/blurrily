@@ -68,7 +68,7 @@ module Blurrily
     # Returns something to let you know that all is well.
     def put(needle, ref, weight = 0)
       check_valid_needle(needle)
-      raise(ArgumentError, "REF value must be in #{REF_RANGE}")       unless REF_RANGE.include?(ref)
+      check_valid_ref(ref)
       raise(ArgumentError, "WEIGHT value must be in #{WEIGHT_RANGE}") unless WEIGHT_RANGE.include?(weight)
 
       cmd = ["PUT", @db_name, needle, ref, weight]
@@ -76,6 +76,12 @@ module Blurrily
       return
     end
 
+    def delete(ref)
+      check_valid_ref(ref)
+      cmd = ['DELETE', @db_name, ref]
+      send_cmd_and_get_results(cmd)
+      return
+    end
 
     def clear()
       send_cmd_and_get_results(['CLEAR', @db_name])
@@ -92,19 +98,25 @@ module Blurrily
       raise(ArgumentError, "bad needle") if !needle.kind_of?(String) || needle.empty? || needle.include?("\t")
     end
 
+    def check_valid_ref(ref)
+      raise(ArgumentError, "REF value must be in #{REF_RANGE}") unless REF_RANGE.include?(ref)
+    end
+
+
     def connection
       @connection ||= TCPSocket.new(@host, @port)
     end
 
     def send_cmd_and_get_results(argv)
-      connection.puts argv.join("\t")
-      result = connection.gets
-      case result
-      when 'OK'
+      output = argv.join("\t")
+      connection.puts output
+      input = connection.gets
+      case input
+      when "OK\n"
         return []
-      when /^OK\t(.*)/
+      when /^OK\t(.*)\n/
         return $1.split("\t")
-      when /^ERROR\t(.*)/
+      when /^ERROR\t(.*)\n/
         raise Error, $1
       when nil
         raise Error, 'Server disconnected'

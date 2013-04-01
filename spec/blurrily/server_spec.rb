@@ -19,7 +19,7 @@ describe Blurrily::Server do
     after do
       if @pid
         Process.kill('KILL', @pid)
-        Process.wait
+        Process.wait(@pid)
       end
     end
 
@@ -51,25 +51,12 @@ describe Blurrily::Server do
   end
 
   def try_to_start_server(directory)
-    result = 10.times do
-      port = (1024 + rand(32768-1024))
-      pid = fork do
-        described_class.new(:port => port, :directory => directory).start
-        Kernel.exit 0
-      end
-      started = 10.times do |i|
-        sleep 50e-3
-        begin
-          TCPSocket.new(host, port).close
-          break true
-        rescue Errno::ECONNREFUSED
-          next
-        end
-      end
-      return [port, pid] if started == true
-      Process.kill('KILL', pid)
-      Process.detach(pid)
+    port = find_free_port
+    pid = fork do
+      described_class.new(:port => port, :directory => directory).start
+      Kernel.exit 0
     end
-    raise 'Could not start server'
+    wait_for_socket('localhost', port)
+    return [port, pid]
   end
 end

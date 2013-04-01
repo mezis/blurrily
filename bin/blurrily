@@ -13,7 +13,7 @@ options.directory  = '.'
 options.host = '0.0.0.0'
 
 parser = OptionParser.new do |opts|
-  opts.banner = "Usage: blurrily-server [options]"
+  opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
 
   opts.on("-p", "--port <PORT>", "Bind to PORT, defaults to 12021") do |port|
     puts 'Port has to be numeric value' and exit unless port =~ /\d+/
