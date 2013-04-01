@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+$PROGRAM_NAME = 'blurrily'
 
 require "blurrily/server"
 require 'optparse'
@@ -27,6 +28,11 @@ parser = OptionParser.new do |opts|
     options.host = address || '0.0.0.0'
   end
 
+  opts.on("-V", "--version", "Output version") do |address|
+    puts Blurrily::VERSION
+    exit
+  end
+
   opts.on_tail("-h", "--help", "Show this message") do
     puts opts
     exit
@@ -34,7 +40,4 @@ parser = OptionParser.new do |opts|
 end
 
 parser.parse!(ARGV)
-
-$PROGRAM_NAME = 'blurrily'
-puts "Starting Blurrily Server v#{Blurrily::VERSION} in directory: '#{options.dir}' on #{options.host}:#{options.port}"
 Blurrily::Server.new(:host => options.host, :port => options.port, :directory => options.directory).start
