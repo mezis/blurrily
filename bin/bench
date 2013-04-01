@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require 'bundler/setup'
-require 'blurrily'
+require 'blurrily/map'
 require 'progressbar'
 require 'open-uri'
 require 'tempfile'
@@ -12,12 +12,13 @@ require 'zlib'
 module Blurrily
   class Benchmark
     ARCHIVES = {
-      cities: 'http://mezis.s3.amazonaws.com/blurrily-data/cities1000-filtered.txt.gz',
-      europe: 'http://mezis.s3.amazonaws.com/blurrily-data/de_fr_es_gb_it-filtered.txt.gz',
-      us:     'http://mezis.s3.amazonaws.com/blurrily-data/us-filtered.txt.gz',
-      world:  'http://mezis.s3.amazonaws.com/blurrily-data/allCountries-filtered.txt.gz',
-      russia: 'http://mezis.s3.amazonaws.com/blurrily-data/ru-filtered.txt.gz',
-      asia:   'http://mezis.s3.amazonaws.com/blurrily-data/ru_cn_ir-filtered.txt.gz',
+      cities:  'http://mezis.s3.amazonaws.com/blurrily-data/cities1000-filtered.txt.gz',
+      europe:  'http://mezis.s3.amazonaws.com/blurrily-data/de_fr_es_gb_it-filtered.txt.gz',
+      us:      'http://mezis.s3.amazonaws.com/blurrily-data/us-filtered.txt.gz',
+      world:   'http://mezis.s3.amazonaws.com/blurrily-data/allCountries-filtered.txt.gz',
+      russia:  'http://mezis.s3.amazonaws.com/blurrily-data/ru-filtered.txt.gz',
+      asia:    'http://mezis.s3.amazonaws.com/blurrily-data/ru_cn_ir-filtered.txt.gz',
+      english: 'http://mezis.s3.amazonaws.com/blurrily-data/english.txt.gz',
     }
 
     SEARCH_CITIES = %w(London Paris Rome Luxembourg) +
@@ -164,7 +165,7 @@ end
 
 $PROGRAM_NAME = 'blurrily:bench'
 
-%i(cities europe russia asia us world).each do |key|
+%i(english cities europe russia asia us world).each do |key|
   bbm = Blurrily::Benchmark.new(key)
   benchmarks = bbm.run
   puts "-"*80
