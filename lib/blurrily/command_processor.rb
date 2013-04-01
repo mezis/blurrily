@@ -14,10 +14,10 @@ module Blurrily
       command, map_name, *args = line.split(/\t/)
       raise ProtocolError, 'Unknown command' unless COMMANDS.include? command
       raise ProtocolError, 'Invalid database name' unless map_name =~ /^[a-z_]+$/
-      send("on_#{command}", map_name, *args)
-
+      result = send("on_#{command}", map_name, *args)
+      ['OK', *result].join("\t")
     rescue ArgumentError, ProtocolError => e
-      "ERROR\t#{e.message}"
+      ['ERROR', e.message].join("\t")
     end
 
     private
@@ -29,7 +29,7 @@ module Blurrily
       raise ProtocolError, 'Invalid weight'    unless weight.nil? || (weight =~ /^\d+$/ && WEIGHT_RANGE.include?(weight.to_i))
 
       @map_group.map(map_name).put(*[needle, ref.to_i, weight.to_i].compact)
-      return nil
+      return
     end
 
     def on_FIND(map_name, needle, limit = nil)
@@ -37,12 +37,12 @@ module Blurrily
 
       results = @map_group.map(map_name).find(*[needle, limit && limit.to_i].compact)
       refs = results.map{ |result| result.first }
-      return ['FOUND', *refs].join("\t")
+      return refs
     end
 
     def on_CLEAR(map_name)
       @map_group.clear(map_name)
-      return nil
+      return
     end
   end
 end

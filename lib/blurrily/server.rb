@@ -30,7 +30,6 @@ module Blurrily
       def receive_data(data)
         data.split("\n").each do |line|
           output = @processor.process_command(line.strip)
-          next if output.nil?
           output << "\n"
           send_data(output)
         end

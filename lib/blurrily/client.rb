@@ -6,10 +6,7 @@ require 'blurrily/defaults'
 
 module Blurrily
   class Client
-
-    # IP_REGEX = /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/
-    # PORT_REGEX = LIMIT_REGEX = REF_REGEX = WEIGHT_REGEX = /[\d]+/
-    # NEEDLE_REGEX = /[\t]+/
+    Error = Class.new(RuntimeError)
 
     # Public: Initialize a new Blurrily::Client connection to Blurrily::Server.
     #
@@ -52,8 +49,8 @@ module Blurrily
       check_valid_needle(needle)
       raise(ArgumentError, "LIMIT value must be in #{LIMIT_RANGE}") unless LIMIT_RANGE.include?(limit)
 
-      cmd = ["FIND", @db_name, needle, limit].join("\t")
-      return send_cmd_and_get_results(cmd)
+      cmd = ["FIND", @db_name, needle, limit]
+      send_cmd_and_get_results(cmd).map(&:to_i)
     end
 
     # Public: Index a given record.
@@ -74,15 +71,20 @@ module Blurrily
       raise(ArgumentError, "REF value must be in #{REF_RANGE}")       unless REF_RANGE.include?(ref)
       raise(ArgumentError, "WEIGHT value must be in #{WEIGHT_RANGE}") unless WEIGHT_RANGE.include?(weight)
 
-      cmd = ["PUT", @db_name, needle, ref, weight].join("\t")
-      return send_cmd_and_get_results(cmd)
+      cmd = ["PUT", @db_name, needle, ref, weight]
+      send_cmd_and_get_results(cmd)
+      return
     end
 
-    def clear
-      raise(NotImplementedError)
+
+    def clear()
+      send_cmd_and_get_results(['CLEAR', @db_name])
+      return
     end
+
 
     private
+
 
     PORT_RANGE = 1025..32768
 
@@ -90,11 +92,25 @@ module Blurrily
       raise(ArgumentError, "bad needle") if !needle.kind_of?(String) || needle.empty? || needle.include?("\t")
     end
 
-    def send_cmd_and_get_results(cmd)
-      @client = TCPSocket.new @host, @port
-      @client.put(cmd)
-      results = @client.get
-      return results
+    def connection
+      @connection ||= TCPSocket.new(@host, @port)
+    end
+
+    def send_cmd_and_get_results(argv)
+      connection.puts argv.join("\t")
+      result = connection.gets
+      case result
+      when 'OK'
+        return []
+      when /^OK\t(.*)/
+        return $1.split("\t")
+      when /^ERROR\t(.*)/
+        raise Error, $1
+      when nil
+        raise Error, 'Server disconnected'
+      else
+        raise Error, 'Server did not respect protocol'
+      end
     end
 
   end

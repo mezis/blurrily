@@ -13,13 +13,13 @@ describe Blurrily::CommandProcessor do
     # PUT-><db>-><needle>-><ref>->[weight]
 
     it 'PUT and FIND finds something' do
-      subject.process_command("PUT\tlocations_en\tgreat london\t12").should be_nil
-      subject.process_command("PUT\tlocations_en\tgreater masovian\t13").should be_nil
-      subject.process_command("FIND\tlocations_en\tgreat").should == "FOUND\t12\t13"
+      subject.process_command("PUT\tlocations_en\tgreat london\t12").should == 'OK'
+      subject.process_command("PUT\tlocations_en\tgreater masovian\t13").should == 'OK'
+      subject.process_command("FIND\tlocations_en\tgreat").should == "OK\t12\t13"
     end
 
-    it 'FIND returns "FOUND" if nothing found' do
-      subject.process_command("FIND\tlocations_en\tgreat london").should == "FOUND"
+    it 'FIND returns "OK" if nothing found' do
+      subject.process_command("FIND\tlocations_en\tgreat london").should == "OK"
     end
 
 
@@ -48,11 +48,11 @@ describe Blurrily::CommandProcessor do
     end
 
     it 'does not return ERROR for good PUT string' do
-      subject.process_command("PUT\tdb\tWhatever string\t12\t1").should be_nil
+      subject.process_command("PUT\tdb\tWhatever string\t12\t1").should == 'OK'
     end
 
     it 'does not return ERROR for limit' do
-      subject.process_command("FIND\tdb\tWhatever string\t2").should == "FOUND"
+      subject.process_command("FIND\tdb\tWhatever string\t2").should == "OK"
     end
 
     # it 'CLEAR tries to clear given DB' do
