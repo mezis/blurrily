@@ -20,6 +20,10 @@ module Blurrily
       end
     end
 
+    def clear(name)
+      @maps[name] = Map.new
+    end
+
     private
 
     def load_map(name)
