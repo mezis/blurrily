@@ -1,5 +1,6 @@
 require 'blurrily'
 require 'socket'
+require 'timeout'
  
 #
 # Example:
@@ -27,6 +28,36 @@ def mock_tcp_next_request(string, client_expectation=nil)
 
       TCPSocket.unstub!(:new)
     end
+  end
+end
+
+
+def is_port_open?(host, port)
+  Timeout::timeout(1.0) do
+    TCPSocket.new(host, port).close
+    return true
+  end
+rescue Timeout::Error, Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+  return false
+end
+
+def find_free_port()
+  while true
+    port = 1024 + rand(32768 - 1024)
+    is_port_open?('localhost', port) and next
+    break port
+  end
+end
+
+def wait_for_socket(host, port, timeout=10.0)
+  Timeout::timeout(timeout) do
+    sleep 50e-3 while !is_port_open?(host, port)
+  end
+end
+
+def wait_for_file(path, timeout=10.0)
+  Timeout::timeout(timeout) do
+    sleep 50e-3 until path.exist?
   end
 end
 
