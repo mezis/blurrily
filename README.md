@@ -9,6 +9,8 @@ Ruby gem to perform fuzzy text searching.
 
 WORK IN PROGRESS.
 
+[API Documentation](http://rubydoc.info/github/mezis/blurrily/frames)
+
 ## Installation
 
 Add this line to your application's Gemfile:
