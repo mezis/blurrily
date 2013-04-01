@@ -21,7 +21,7 @@ module Blurrily
         Signal.trap("INT")  { EventMachine.stop }
         Signal.trap("TERM") { EventMachine.stop }
 
-        saver = @map_group.method(:save)
+        saver = proc { @map_group.save }
         EventMachine.add_periodic_timer(60, &saver)
         EventMachine.add_shutdown_hook(&saver)
         Signal.trap("USR1", &saver)

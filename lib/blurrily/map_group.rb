@@ -16,7 +16,7 @@ module Blurrily
     def save
       @directory.mkpath
       @maps.each do |name, map|
-        map.save(map_path(name))
+        map.save(path_for(name).to_s)
       end
     end
 
@@ -27,13 +27,13 @@ module Blurrily
     private
 
     def load_map(name)
-      Map.load(map_path(name))
+      Map.load(path_for(name).to_s)
     rescue Errno::ENOENT
       nil
     end
 
-    def map_path(name)
-      File.join(@directory, "#{name}.trigrams")
+    def path_for(name)
+      @directory.join("#{name}.trigrams")
     end
   end
 end
