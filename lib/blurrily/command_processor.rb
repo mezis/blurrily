@@ -15,7 +15,7 @@ module Blurrily
       raise ProtocolError, 'Unknown command' unless COMMANDS.include? command
       raise ProtocolError, 'Invalid database name' unless map_name =~ /^[a-z_]+$/
       result = send("on_#{command}", map_name, *args)
-      ['OK', *result].join("\t")
+      ['OK', *result].compact.join("\t")
     rescue ArgumentError, ProtocolError => e
       ['ERROR', e.message].join("\t")
     end
