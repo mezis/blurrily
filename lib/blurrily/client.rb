@@ -141,7 +141,7 @@ module Blurrily
 
     def send_cmd_and_get_results(argv)
       if argv[0].kind_of?(Array) # bulk input is array of arrays
-        output = argv.map{|x|x.join("\t")}.join("\n")
+        output = argv.map{ |x| x.join("\t") }.join("\n")
       else
         output = argv.join("\t")
       end
