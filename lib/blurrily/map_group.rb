@@ -16,7 +16,7 @@ module Blurrily
     def save
       @directory.mkpath
       @maps.each do |name, map|
-        map.save(path_for(name).to_s)
+        map.save(path_for(name).to_s) if map.dirty?
       end
     end
 

@@ -55,6 +55,11 @@ describe Blurrily::Map do
       map.put 'paris', 123
       map.find('paris').should be_empty
     end
+
+    it 'makes map dirty' do
+      subject.put 'london', 123
+      subject.should be_dirty
+    end
   end
 
   describe '#delete' do
@@ -63,6 +68,12 @@ describe Blurrily::Map do
       subject.delete 123
       subject.stats[:trigrams].should == 0
       subject.stats[:references].should == 0
+    end
+
+    it 'makes map dirty' do
+      subject.put 'london', 123, 0
+      subject.delete 123
+      subject.should be_dirty
     end
 
     context 'with duplicate references' do
@@ -237,6 +248,11 @@ describe Blurrily::Map do
       hashes = (1..3).map { perform ; path.md5sum }
       hashes[0].should == hashes[1]
       hashes[0].should == hashes[2]
+    end
+
+    it 'makes map clean' do
+      perform
+      subject.should_not be_dirty
     end
   end
 

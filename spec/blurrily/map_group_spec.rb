@@ -30,8 +30,8 @@ describe Blurrily::MapGroup do
 
   context "saving the map to file" do
     it "saves all maps" do
-      subject.map('location_en')
-      subject.map('location_fr')
+      subject.map('location_en').put('london', 10, 0)
+      subject.map('location_fr').put('london', 10, 0)
       subject.save
       File.exists?(File.join('.','location_en.trigrams')).should be_true
       File.exists?(File.join('.','location_fr.trigrams')).should be_true
@@ -39,9 +39,22 @@ describe Blurrily::MapGroup do
 
     it 'saves in chosen directory' do
       map_group = described_class.new('tmp')
-      map_group.map('test')
+      map_group.map('test').put('london', 10, 0)
       map_group.save
       File.exists?(File.join('tmp','test.trigrams')).should be_true
+    end
+
+    it 'does not save clean map' do
+      map_group = described_class.new('tmp')
+      map_group.map('test')
+      map_group.save
+      File.exists?(File.join('tmp','test.trigrams')).should be_false
+    end
+
+    it 'saves dirty map' do
+      subject.map('location_fr').put('london', 10, 0)
+      subject.save
+      File.exists?(File.join('.','location_fr.trigrams')).should be_true
     end
 
     after(:each) do
