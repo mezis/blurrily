@@ -3,24 +3,37 @@ require 'active_support/core_ext/module/aliasing' # alias_method_chain
 require 'active_support/core_ext/string/multibyte' # mb_chars
 
 module Blurrily
-  Map.class_eval do
+  class Map < RawMap
 
-    def put_with_string_normalize(needle, reference, weight=nil)
+    def put(needle, reference, weight=nil)
       weight ||= 0
       needle = normalize_string needle
-      put_without_string_normalize(needle, reference, weight)
+      @clean_path = nil
+      super(needle, reference, weight)
     end
 
-    alias_method_chain :put, :string_normalize
-
-
-    def find_with_string_normalize(needle, limit=10)
+    def find(needle, limit=10)
       needle = normalize_string needle
-      find_without_string_normalize(needle, limit)
+      super(needle, limit)
     end
 
-    alias_method_chain :find, :string_normalize
+    def delete(*args)
+      @clean_path = nil
+      super(*args)
+    end
 
+    def save(path)
+      return if @clean_path == path
+      super(path)
+      @clean_path = path
+      nil
+    end
+
+    def self.load(path)
+      super(path).tap do |map|
+        map.instance_variable_set :@clean_path, path
+      end
+    end
 
     private
 
@@ -32,6 +45,5 @@ module Blurrily
       end
       result.gsub(/\s+/,' ').strip
     end
-
   end
 end
