@@ -289,7 +289,7 @@ describe Blurrily::Map do
     end
 
     it 'then saves to an identical file' do
-      subject.save alt_path.to_s
+      subject.dirty!.save alt_path.to_s
       path.md5sum.should == alt_path.md5sum
     end
 
@@ -307,6 +307,13 @@ describe Blurrily::Map do
     it 'raises an exception if the file is corrupt' do
       path.truncate(128) # leave the magic in, but make it the wrong size
       expect { subject }.to raise_exception(Errno::EPROTO)
+    end
+
+    it 'loads clean map' do
+      subject
+      path.delete_if_exists
+      subject.save path.to_s
+      path.should_not exist
     end
   end
 

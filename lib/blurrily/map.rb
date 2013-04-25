@@ -35,6 +35,20 @@ module Blurrily
       end
     end
 
+    def self.load(*args)
+      super(*args).clean!
+    end
+
+    def clean!
+      @dirty = false
+      self
+    end
+
+    def dirty!
+      @dirty = true
+      self
+    end
+
     private
 
     def dirty?
