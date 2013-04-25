@@ -289,7 +289,7 @@ describe Blurrily::Map do
     end
 
     it 'then saves to an identical file' do
-      subject.dirty!.save alt_path.to_s
+      subject.save alt_path.to_s
       path.md5sum.should == alt_path.md5sum
     end
 

@@ -3,17 +3,12 @@ require 'active_support/core_ext/module/aliasing' # alias_method_chain
 require 'active_support/core_ext/string/multibyte' # mb_chars
 
 module Blurrily
-  class Map < CMap
-
-    def initialize
-      @dirty = true
-      super
-    end
+  class Map < RawMap
 
     def put(needle, reference, weight=nil)
       weight ||= 0
       needle = normalize_string needle
-      @dirty = true
+      @clean_path = nil
       super(needle, reference, weight)
     end
 
@@ -23,37 +18,24 @@ module Blurrily
     end
 
     def delete(*args)
-      @dirty = true
+      @clean_path = nil
       super(*args)
     end
 
-    def save(*args)
-      if @dirty
-        saved = super(*args)
-        @dirty = false
-        saved
+    def save(path)
+      return if @clean_path == path
+      super(path)
+      @clean_path = path
+      nil
+    end
+
+    def self.load(path)
+      super(path).tap do |map|
+        map.instance_variable_set :@clean_path, path
       end
     end
 
-    def self.load(*args)
-      super(*args).clean!
-    end
-
-    def clean!
-      @dirty = false
-      self
-    end
-
-    def dirty!
-      @dirty = true
-      self
-    end
-
     private
-
-    def dirty?
-      @dirty
-    end
 
     def normalize_string(needle)
       result = needle.downcase

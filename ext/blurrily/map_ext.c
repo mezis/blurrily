@@ -210,7 +210,7 @@ void Init_map_ext(void) {
   eBlurrilyModule = rb_define_module("Blurrily");
   assert(eBlurrilyModule != Qnil);
 
-  klass = rb_define_class_under(eBlurrilyModule, "CMap", rb_cObject);
+  klass = rb_define_class_under(eBlurrilyModule, "RawMap", rb_cObject);
   assert(klass != Qnil);
 
   eClosedError = rb_define_class_under(klass, "ClosedError", rb_eRuntimeError);
