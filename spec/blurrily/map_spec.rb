@@ -6,6 +6,11 @@ require "blurrily/map"
 
 describe Blurrily::Map do
   subject { described_class.new }
+  let(:path) { Pathname.new('map.test') }
+
+  after do
+    path.delete_if_exists
+  end
 
   describe '#stats' do
     let(:result) { subject.stats }
@@ -50,15 +55,18 @@ describe Blurrily::Map do
 
     it 'ignores dupes after save/load cycle' do
       subject.put 'london', 123
-      subject.save 'tmp/map'
-      map = described_class.load 'tmp/map'
+      subject.save path.to_s
+      map = described_class.load path.to_s
       map.put 'paris', 123
       map.find('paris').should be_empty
     end
 
     it 'makes map dirty' do
+      subject.save path.to_s
+      path.delete_if_exists
       subject.put 'london', 123
-      subject.should be_dirty
+      subject.save path.to_s
+      path.should exist
     end
   end
 
@@ -72,8 +80,11 @@ describe Blurrily::Map do
 
     it 'makes map dirty' do
       subject.put 'london', 123, 0
+      subject.save path.to_s
+      path.delete_if_exists
       subject.delete 123
-      subject.should be_dirty
+      subject.save path.to_s
+      path.should exist
     end
 
     context 'with duplicate references' do
@@ -188,8 +199,7 @@ describe Blurrily::Map do
 
 
   describe '#save' do
-    let(:path) { Pathname.new('map.test') }
-    
+
     def perform
       subject.save path.to_s
     end
@@ -221,10 +231,6 @@ describe Blurrily::Map do
       subject.put 'monaco',  12, 0
     end
 
-    after do
-      path.delete_if_exists
-    end
-
     it 'creates a file on disk' do
       perform
       path.should exist
@@ -252,14 +258,16 @@ describe Blurrily::Map do
 
     it 'makes map clean' do
       perform
-      subject.should_not be_dirty
+      path.delete_if_exists
+      perform
+      path.should_not exist
     end
+
   end
 
 
   describe '.load' do
     subject { described_class.load path.to_s }
-    let(:path) { Pathname.new('map.test') }
     let(:alt_path) { Pathname.new('map2.test') }
 
     before do
@@ -273,7 +281,6 @@ describe Blurrily::Map do
     end
 
     after do
-      path.delete_if_exists
       alt_path.delete_if_exists
     end
 
