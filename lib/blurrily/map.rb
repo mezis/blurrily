@@ -3,26 +3,57 @@ require 'active_support/core_ext/module/aliasing' # alias_method_chain
 require 'active_support/core_ext/string/multibyte' # mb_chars
 
 module Blurrily
-  Map.class_eval do
+  class Map < CMap
 
-    def put_with_string_normalize(needle, reference, weight=nil)
+    def initialize
+      @dirty = true
+      super
+    end
+
+    def put(needle, reference, weight=nil)
       weight ||= 0
       needle = normalize_string needle
-      put_without_string_normalize(needle, reference, weight)
+      @dirty = true
+      super(needle, reference, weight)
     end
 
-    alias_method_chain :put, :string_normalize
-
-
-    def find_with_string_normalize(needle, limit=10)
+    def find(needle, limit=10)
       needle = normalize_string needle
-      find_without_string_normalize(needle, limit)
+      super(needle, limit)
     end
 
-    alias_method_chain :find, :string_normalize
+    def delete(*args)
+      @dirty = true
+      super(*args)
+    end
 
+    def save(*args)
+      if @dirty
+        saved = super(*args)
+        @dirty = false
+        saved
+      end
+    end
+
+    def self.load(*args)
+      super(*args).clean!
+    end
+
+    def clean!
+      @dirty = false
+      self
+    end
+
+    def dirty!
+      @dirty = true
+      self
+    end
 
     private
+
+    def dirty?
+      @dirty
+    end
 
     def normalize_string(needle)
       result = needle.downcase
@@ -32,6 +63,5 @@ module Blurrily
       end
       result.gsub(/\s+/,' ').strip
     end
-
   end
 end
