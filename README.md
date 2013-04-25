@@ -99,7 +99,7 @@ strings).
 This means that case and diacritrics are completely ignored by Blurrily. For
 instance, *Puy-de-Dôme* is strictly equivalent to *puy de dome*.
 
-It also means that any non-latin input will probably result in garbase data
+It also means that any non-latin input will probably result in garbage data
 and garbage results (although it won't crash).
 
 ### Multi-word needles and edge stickyness.
