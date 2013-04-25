@@ -109,7 +109,7 @@ Multi-word needles (say, *New York*) are supported.
 The engine always favours matches that begin and end similarly to the
 needle, with a bias to the beginning of the strings.
 
-Thsi is because internally, the string *New York* is turned into this
+This is because internally, the string *New York* is turned into this
 sequence of trigrams: `**n`, `*ne`, `new`, `ew*`, `w*y`, `*yo`, `yor`,
 `ork`, `rk*`.
 
@@ -131,7 +131,7 @@ For instance, `/usr/share/dict/words` is a list of 235k English words, and
 weighs 2.5MB. Importing the whole list uses up 75MB of memory, 51MB of which
 are the database.
 
-Note that once a databse has been written to disk and loaded from disk,
+Note that once a database has been written to disk and loaded from disk,
 memory usage is minimal (560KB per database) as the database file is memory
 mapped. For performance you do need as much free memory as the database
 size.
