@@ -13,7 +13,7 @@ when 'LINUX'
 end
 
 # production
-$CFLAGS += " #{SHARED_FLAGS} -O3 -fno-fast-math"
+$CFLAGS += " #{SHARED_FLAGS} -Os"
 
 # development
 # $CFLAGS += " #{SHARED_FLAGS} -O0 -g"
