@@ -1,6 +1,9 @@
 require 'blurrily'
 require 'socket'
 require 'timeout'
+require 'coveralls'
+
+Coveralls.wear!
  
 #
 # Example:
