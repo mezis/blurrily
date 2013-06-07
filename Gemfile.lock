@@ -4,7 +4,6 @@ PATH
     blurrily (0.2.1)
       activesupport
       eventmachine
-      json
 
 GEM
   remote: https://rubygems.org/
@@ -34,7 +33,6 @@ GEM
       guard (>= 1.1)
       rspec (~> 2.11)
     i18n (0.6.1)
-    json (1.7.7)
     listen (0.7.3)
     lumberjack (1.0.3)
     method_source (0.8.1)
