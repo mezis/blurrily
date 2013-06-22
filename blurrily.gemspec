@@ -6,7 +6,7 @@ require 'blurrily/version'
 Gem::Specification.new do |gem|
   gem.name          = "blurrily"
   gem.version       = Blurrily::VERSION
-  gem.authors       = ["Julien Letessier"]
+  gem.authors       = ["Julien Letessier", "Dawid Sklodowski", "Marcus Mitchell"]
   gem.email         = ["julien.letessier@gmail.com"]
   gem.description   = %q{Native fuzzy string search}
   gem.summary       = %q{Native fuzzy string search}
