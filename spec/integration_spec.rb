@@ -28,18 +28,24 @@ describe 'client/server integration' do
     Process.detach(@pid)
   end
 
+  it 'does single find' do
+    @client.put 'paris', 123
+    @client.find('paris').should  =~ [[123, 6, 5]]
+    @client.find('pariis').should  =~ [[123, 5, 5]]
+  end
+
   it 'does put/find cycles' do
     @client.put 'paris', 123
     @client.put 'paris', 456
-    @client.find('paris').should  =~ [123, 456]
-    @client.find('pariis').should =~ [123, 456]
+    @client.find('paris').map(&:first).should  =~ [123, 456]
+    @client.find('pariis').map(&:first).should =~ [123, 456]
   end
 
   it 'does put/delete/find cycles' do
     @client.put 'paris', 123
     @client.put 'paris', 456
     @client.delete 456
-    @client.find('paris').should  =~ [123]
+    @client.find('paris').map(&:first).should  =~ [123]
   end
 
   it 'handles multiple databases' do
@@ -47,9 +53,9 @@ describe 'client/server integration' do
     @client.put 'rome', 1
     @other_client.put 'venice', 2
 
-    @client.find('rome').should == [1]
+    @client.find('rome').map(&:first).should == [1]
     @client.find('venice').should be_empty
-    @other_client.find('venice').should == [2]
+    @other_client.find('venice').map(&:first).should == [2]
     @other_client.find('rome').should be_empty
   end
 
@@ -65,7 +71,7 @@ describe 'client/server integration' do
     data_dir.mkpath
     map.save(data_file.to_s)
 
-    @client.find('london').should == [1337]
+    @client.find('london').map(&:first).should == [1337]
   end
 
 end

@@ -15,7 +15,7 @@ describe Blurrily::CommandProcessor do
     it 'PUT and FIND finds something' do
       subject.process_command("PUT\tlocations_en\tgreat london\t12").should == 'OK'
       subject.process_command("PUT\tlocations_en\tgreater masovian\t13").should == 'OK'
-      subject.process_command("FIND\tlocations_en\tgreat").should == "OK\t12\t13"
+      subject.process_command("FIND\tlocations_en\tgreat").should == "OK\t12\t6\t12\t13\t5\t16"
     end
 
     it 'FIND returns "OK" if nothing found' do
