@@ -605,6 +605,9 @@ int blurrily_storage_delete(trigram_map haystack, uint32_t reference)
   }
   haystack->total_trigrams -= trigrams_deleted;
   if (trigrams_deleted > 0) haystack->total_references -= 1;
+
+  if (haystack->refs) blurrily_refs_remove(haystack->refs, reference); 
+  
   return trigrams_deleted;
 }
 
