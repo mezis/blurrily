@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{Native fuzzy string search}
   gem.homepage      = "http://github.com/mezis/blurrily"
 
-  gem.add_dependency 'activesupport'
+  gem.add_dependency 'activesupport', '~> 4'
   gem.add_dependency 'eventmachine'
 
   gem.add_development_dependency 'rspec'
