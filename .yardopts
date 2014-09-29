@@ -1,0 +1,6 @@
+--no-private
+--protected
+--markup-provider=redcarpet
+--markup=markdown
+
+lib/**/*.rb - README.md LICENSE.txt
