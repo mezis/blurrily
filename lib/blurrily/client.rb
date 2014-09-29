@@ -50,7 +50,7 @@ module Blurrily
       raise(ArgumentError, "LIMIT value must be in #{LIMIT_RANGE}") unless LIMIT_RANGE.include?(limit)
 
       cmd = ["FIND", @db_name, needle, limit]
-      send_cmd_and_get_results(cmd).map(&:to_i)
+      send_cmd_and_get_results(cmd).map(&:to_i).each_slice(3).to_a
     end
 
     # Public: Index a given record.

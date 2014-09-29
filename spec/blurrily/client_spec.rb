@@ -25,8 +25,8 @@ describe Blurrily::Client do
     end
 
     it "returns records" do
-      mock_tcp_next_request("OK\t1337", "FIND\tlocation_en\tlondon\t10")
-      subject.find("london").should == [1337]
+      mock_tcp_next_request("OK\t1337\t1\t2", "FIND\tlocation_en\tlondon\t10")
+      subject.find("london").should == [[1337,1,2]]
     end
 
     it "handles no records found correctly" do

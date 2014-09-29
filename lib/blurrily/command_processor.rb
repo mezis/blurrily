@@ -42,8 +42,7 @@ module Blurrily
       raise ProtocolError, 'Limit must be a number' if limit && !LIMIT_RANGE.include?(limit.to_i)
 
       results = @map_group.map(map_name).find(*[needle, limit && limit.to_i].compact)
-      refs = results.map{ |result| result.first }
-      return refs
+      return results.flatten
     end
 
     def on_CLEAR(map_name)
