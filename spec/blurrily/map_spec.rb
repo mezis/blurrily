@@ -101,6 +101,13 @@ describe Blurrily::Map do
       subject.stats[:trigrams].should == 0
     end
 
+    it 'permits re-adds' do
+      subject.put 'london', 1337
+      subject.delete 1337
+      subject.put 'paris', 1337
+      subject.find('paris').should_not be_empty
+    end
+
   end
 
   describe '#find' do
