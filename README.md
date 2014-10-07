@@ -1,9 +1,9 @@
 # Blurrily — Millisecond fuzzy string matching
 
-[![Gem Version](https://badge.fury.io/rb/blurrily.png)](http://badge.fury.io/rb/blurrily)
-[![Build Status](https://travis-ci.org/mezis/blurrily.png?branch=master)](https://travis-ci.org/mezis/blurrily)
-[![Dependency Status](https://gemnasium.com/mezis/blurrily.png)](https://gemnasium.com/mezis/blurrily)
-[![Code Climate](https://codeclimate.com/github/mezis/blurrily.png)](https://codeclimate.com/github/mezis/blurrily)
+[![Gem Version](https://badge.fury.io/rb/blurrily.svg)](http://badge.fury.io/rb/blurrily)
+[![Build Status](https://travis-ci.org/mezis/blurrily.svg?branch=master)](https://travis-ci.org/mezis/blurrily)
+[![Dependency Status](https://gemnasium.com/mezis/blurrily.svg)](https://gemnasium.com/mezis/blurrily)
+[![Code Climate](https://codeclimate.com/github/mezis/blurrily.svg)](https://codeclimate.com/github/mezis/blurrily)
 [![Coverage Status](https://coveralls.io/repos/mezis/blurrily/badge.png)](https://coveralls.io/r/mezis/blurrily)
 
 > Show me photos of **Marakech** !

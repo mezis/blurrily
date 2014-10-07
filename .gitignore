@@ -19,3 +19,10 @@ Makefile
 
 # Mac turds
 .DS_Store
+
+# Docs
+doc/
+.yardoc/
+
+# Coveralls
+coverage/
