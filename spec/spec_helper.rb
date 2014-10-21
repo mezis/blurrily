@@ -23,13 +23,11 @@ class FakeTCPSocket
 end
  
 def mock_tcp_next_request(string, client_expectation=nil) 
-  TCPSocket.stub!(:new).and_return do
+  allow(TCPSocket).to receive(:new) do
     FakeTCPSocket.new(string).tap do |fake_socket|
       if client_expectation
-        fake_socket.should_receive(:puts).with(client_expectation)
+        expect(fake_socket).to receive(:puts).with(client_expectation)
       end
-
-      TCPSocket.unstub!(:new)
     end
   end
 end

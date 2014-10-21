@@ -30,22 +30,22 @@ describe 'client/server integration' do
 
   it 'does single find' do
     @client.put 'paris', 123
-    @client.find('paris').should  =~ [[123, 6, 5]]
-    @client.find('pariis').should  =~ [[123, 5, 5]]
+    expect(@client.find('paris')).to match([[123, 6, 5]])
+    expect(@client.find('pariis')).to match([[123, 5, 5]])
   end
 
   it 'does put/find cycles' do
     @client.put 'paris', 123
     @client.put 'paris', 456
-    @client.find('paris').map(&:first).should  =~ [123, 456]
-    @client.find('pariis').map(&:first).should =~ [123, 456]
+    expect(@client.find('paris').map(&:first)).to match([123, 456])
+    expect(@client.find('pariis').map(&:first)).to match([123, 456])
   end
 
   it 'does put/delete/find cycles' do
     @client.put 'paris', 123
     @client.put 'paris', 456
     @client.delete 456
-    @client.find('paris').map(&:first).should  =~ [123]
+    expect(@client.find('paris').map(&:first)).to match([123])
   end
 
   it 'handles multiple databases' do
@@ -53,10 +53,10 @@ describe 'client/server integration' do
     @client.put 'rome', 1
     @other_client.put 'venice', 2
 
-    @client.find('rome').map(&:first).should == [1]
-    @client.find('venice').should be_empty
-    @other_client.find('venice').map(&:first).should == [2]
-    @other_client.find('rome').should be_empty
+    expect(@client.find('rome').map(&:first)).to eq([1])
+    expect(@client.find('venice')).to be_empty
+    expect(@other_client.find('venice').map(&:first)).to eq([2])
+    expect(@other_client.find('rome')).to be_empty
   end
 
   it 'saves files on SIGURS1' do
@@ -71,7 +71,7 @@ describe 'client/server integration' do
     data_dir.mkpath
     map.save(data_file.to_s)
 
-    @client.find('london').map(&:first).should == [1337]
+    expect(@client.find('london').map(&:first)).to eq([1337])
   end
 
 end
