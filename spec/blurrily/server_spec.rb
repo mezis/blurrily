@@ -29,12 +29,14 @@ describe Blurrily::Server do
 
     it 'responds' do
       socket.puts 'Who is most beautiful in the world?'
-      socket.gets.should =~ /^ERROR\tUnknown command/
+      expect(socket.gets).to match(/^ERROR\tUnknown command/)
     end
 
     it 'does not close the connection' do
       3.times { socket.puts 'Bad command' }
-      3.times { socket.gets.should =~ /^ERROR/ }
+      3.times do
+        expect(socket.gets).to match(/^ERROR/)
+      end
     end
 
     it 'saves when quitting' do
@@ -46,7 +48,8 @@ describe Blurrily::Server do
       Process.kill('TERM', @pid)
       Process.wait(@pid)
       @pid = nil
-      Pathname.new(directory).join('words.trigrams').should exist
+      path = Pathname.new(directory).join('words.trigrams')
+      expect(path).to exist
     end
   end
 

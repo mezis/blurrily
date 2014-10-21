@@ -26,12 +26,12 @@ describe Blurrily::Client do
 
     it "returns records" do
       mock_tcp_next_request("OK\t1337\t1\t2", "FIND\tlocation_en\tlondon\t10")
-      subject.find("london").should == [[1337,1,2]]
+      expect(subject.find("london")).to eq([[1337,1,2]])
     end
 
     it "handles no records found correctly" do
       mock_tcp_next_request("OK")
-      subject.find("blah").should be_empty
+      expect(subject.find("blah")).to be_empty
     end
 
     it "handles errors correctly" do
@@ -63,7 +63,7 @@ describe Blurrily::Client do
 
     it "created a well formed request command string" do
       mock_tcp_next_request("OK", "PUT\tlocation_en\tLondon\t123\t0")
-      subject.put("London", 123, 0).should be_nil
+      expect(subject.put("London", 123, 0)).to be_nil
     end
   end
 end

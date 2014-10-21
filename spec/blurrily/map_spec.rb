@@ -15,8 +15,13 @@ describe Blurrily::Map do
   describe '#stats' do
     let(:result) { subject.stats }
     
-    its(:references) { result[:references].should be_a_kind_of(Integer) }
-    its(:trigrams)   { result[:trigrams].should be_a_kind_of(Integer) }
+    it 'has :references' do
+      expect(result[:references]).to be_a_kind_of(Integer)
+    end
+
+    it 'has :trigrams' do
+      expect(result[:trigrams]).to be_a_kind_of(Integer)
+    end
 
   end
 
@@ -26,31 +31,31 @@ describe Blurrily::Map do
 
     it 'stores references' do
       subject.put 'foobar', 123, 0
-      references.should == 1
-      trigrams.should   == 7
+      expect(references).to eq(1)
+      expect(trigrams).to   eq(7)
     end
 
     it 'returns number of added trigrams' do
-      subject.put('foobar', 123).should == 7
-      subject.put('foobar', 123).should == 0
+      expect(subject.put('foobar', 123)).to eq(7)
+      expect(subject.put('foobar', 123)).to eq(0)
     end
 
     it 'does not store duplicate references' do
       2.times { subject.put 'foobar', 123, 0 }
-      references.should == 1
-      trigrams.should   == 7
+      expect(references).to eq(1)
+      expect(trigrams).to eq(7)
     end
 
     it 'accepts empty strings' do
       subject.put '', 123, 0
-      references.should == 1
-      trigrams.should   == 1
+      expect(references).to eq(1)
+      expect(trigrams).to eq(1)
     end
 
     it 'accepts non-letter characters' do
       subject.put '@€%é', 123, 0
-      references.should == 1
-      trigrams.should   == 2
+      expect(references).to eq(1)
+      expect(trigrams).to eq(2)
     end
 
     it 'ignores dupes after save/load cycle' do
@@ -58,7 +63,7 @@ describe Blurrily::Map do
       subject.save path.to_s
       map = described_class.load path.to_s
       map.put 'paris', 123
-      map.find('paris').should be_empty
+      expect(map.find('paris')).to be_empty
     end
 
     it 'makes map dirty' do
@@ -66,7 +71,7 @@ describe Blurrily::Map do
       path.delete_if_exists
       subject.put 'london', 123
       subject.save path.to_s
-      path.should exist
+      expect(path).to exist
     end
   end
 
@@ -74,8 +79,8 @@ describe Blurrily::Map do
     it 'removes references' do
       subject.put 'london', 123, 0
       subject.delete 123
-      subject.stats[:trigrams].should == 0
-      subject.stats[:references].should == 0
+      expect(subject.stats[:trigrams]).to eq(0)
+      expect(subject.stats[:references]).to eq(0)
     end
 
     it 'makes map dirty' do
@@ -84,28 +89,28 @@ describe Blurrily::Map do
       path.delete_if_exists
       subject.delete 123
       subject.save path.to_s
-      path.should exist
+      expect(path).to exist
     end
 
     context 'with duplicate references' do
       it 'removes duplicates' do
         3.times { subject.put 'london', 123, 0 }
         subject.delete 123
-        subject.stats[:trigrams].should == 0
-        subject.stats[:references].should == 0
+        expect(subject.stats[:trigrams]).to eq(0)
+        expect(subject.stats[:references]).to eq(0)
       end
     end
 
     it 'ignores missing references' do
       subject.delete 123
-      subject.stats[:trigrams].should == 0
+      expect(subject.stats[:trigrams]).to eq(0)
     end
 
     it 'permits re-adds' do
       subject.put 'london', 1337
       subject.delete 1337
       subject.put 'paris', 1337
-      subject.find('paris').should_not be_empty
+      expect(subject.find('paris')).not_to be_empty
     end
 
   end
@@ -117,14 +122,14 @@ describe Blurrily::Map do
 
     context 'with an empty map' do
       it 'returns no results' do
-        result.should be_empty
+        expect(result).to be_empty
       end
     end
 
     context 'with an empty string' do
       it 'returns no results' do
         needle.replace ''
-        result.should be_empty
+        expect(result).to be_empty
       end
     end
 
@@ -132,40 +137,40 @@ describe Blurrily::Map do
       let(:limit) { 2 }
       it 'returns fewer results' do
         5.times { |idx| subject.put 'london', idx, 0 }
-        result.length.should == 2
+        expect(result.length).to eq(2)
       end
     end
 
     it 'works with duplicated references' do
       subject.put needle, 123
       subject.put 'london2', 123
-      result.length.should == 1
-      result.first.first.should == 123
+      expect(result.length).to eq(1)
+      expect(result.first.first).to eq(123)
     end
 
     it 'works with duplicated needles and references' do
       subject.put needle, 123
       subject.put needle, 123
-      result.length.should == 1
-      result.first.first.should == 123
+      expect(result.length).to eq(1)
+      expect(result.first.first).to eq(123)
     end
 
     it 'returns perfect matches' do
       subject.put 'london', 123, 0
-      result.first.should == [123, 7, 6]
+      expect(result.first).to eq([123, 7, 6])
     end
 
     it 'favours exact matches' do
       subject.put 'lon',                 125, 0
       subject.put 'london city airport', 124, 0
       subject.put 'london',              123, 0
-      result.first.first.should == 123
+      expect(result.first.first).to eq(123)
     end
 
     it 'ignores duplicate references' do
       subject.put 'london', 123
       subject.put 'paris',  123
-      result.should_not be_empty
+      expect(result).not_to be_empty
     end
 
     context 'when needle is mis-spelt' do
@@ -173,17 +178,17 @@ describe Blurrily::Map do
 
       it 'tolerates insertions' do
         needle.replace 'lonXdon'
-        result.should_not be_empty
+        expect(result).not_to be_empty
       end
 
       it 'tolerates deletions' do
         needle.replace 'lodon'
-        result.should_not be_empty
+        expect(result).not_to be_empty
       end
 
       it 'tolerates substitutions' do
         needle.replace 'lodnon'
-        result.should_not be_empty
+        expect(result).not_to be_empty
       end
     end
 
@@ -193,14 +198,14 @@ describe Blurrily::Map do
       subject.put 'York',       1003, 0
       subject.put 'Yorkisthan', 1004, 0
       needle.replace 'York'
-      result.map(&:first).should == [1003, 1001, 1002, 1004]
+      expect(result.map(&:first)).to eq([1003, 1001, 1002, 1004])
     end
 
     it 'favours the lighter of two matches' do
       subject.put 'london', 103, 103
       subject.put 'london', 101, 101
       subject.put 'london', 102, 102
-      result.map(&:first).should == [101, 102, 103]
+      expect(result.map(&:first)).to eq([101, 102, 103])
     end
   end
 
@@ -240,7 +245,7 @@ describe Blurrily::Map do
 
     it 'creates a file on disk' do
       perform
-      path.should exist
+      expect(path).to exist
     end
 
     it 'raises exception when directory does not exist' do
@@ -252,22 +257,22 @@ describe Blurrily::Map do
     it 'uses a magic header' do
       perform
       header = path.read(8)
-      header[0,6].should == "trigra"
-      header[6,1].should == big_endian_byte
-      header[7,1].should == wordsize_byte
+      expect(header[0,6]).to eq("trigra")
+      expect(header[6,1]).to eq(big_endian_byte)
+      expect(header[7,1]).to eq(wordsize_byte)
     end
 
     it 'is idempotent' do
       hashes = (1..3).map { perform ; path.md5sum }
-      hashes[0].should == hashes[1]
-      hashes[0].should == hashes[2]
+      expect(hashes[0]).to eq(hashes[1])
+      expect(hashes[0]).to eq(hashes[2])
     end
 
     it 'makes map clean' do
       perform
       path.delete_if_exists
       perform
-      path.should_not exist
+      expect(path).not_to exist
     end
 
   end
@@ -292,12 +297,12 @@ describe Blurrily::Map do
     end
 
     it 'results in a searchable map' do
-      subject.find('london').should_not be_empty
+      expect(subject.find('london')).not_to be_empty
     end
 
     it 'then saves to an identical file' do
       subject.save alt_path.to_s
-      path.md5sum.should == alt_path.md5sum
+      expect(path.md5sum).to eq(alt_path.md5sum)
     end
 
     it 'raises an exception when the file does not exist' do
@@ -320,7 +325,7 @@ describe Blurrily::Map do
       subject
       path.delete_if_exists
       subject.save path.to_s
-      path.should_not exist
+      expect(path).not_to exist
     end
   end
 
@@ -357,24 +362,24 @@ describe Blurrily::Map do
 
       it 'puts' do
         count.times { |index| subject.put 'Port-au-Prince', index }
-        subject.stats[:references].should == count
-        subject.find('Port-au-Prince').should_not be_empty
+        expect(subject.stats[:references]).to eq(count)
+        expect(subject.find('Port-au-Prince')).not_to be_empty
       end
 
       it 'put/delete/find' do
         count.times do |index|
           subject.put 'Port-au-Prince', index
           subject.delete index
-          subject.stats.should == { :references => 0, :trigrams => 0 }
-          subject.find('Port-au-Prince').should be_empty
+          expect(subject.stats).to eq({ :references => 0, :trigrams => 0 })
+          expect(subject.find('Port-au-Prince')).to be_empty
         end
       end
 
       it 'put/find/delete' do
         count.times do |index|
           subject.put 'Port-au-Prince', index
-          subject.stats[:references].should == 1
-          subject.find('Port-au-Prince').first.first.should == index
+          expect(subject.stats[:references]).to eq(1)
+          expect(subject.find('Port-au-Prince').first.first).to eq(index)
           subject.delete index
         end
       end
@@ -382,8 +387,8 @@ describe Blurrily::Map do
       it 'puts, many deletes' do
         count.times { |index| subject.put 'Port-au-Prince', index }
         count.times { |index| subject.delete index }
-        subject.stats.should == { :references => 0, :trigrams => 0 }
-        subject.find('Port-au-Prince').should be_empty
+        expect(subject.stats).to eq({ :references => 0, :trigrams => 0 })
+        expect(subject.find('Port-au-Prince')).to be_empty
       end
 
       it 'puts, reload, many deletes' do
@@ -393,8 +398,8 @@ describe Blurrily::Map do
         subject = described_class.load(path.to_s)
 
         count.times { |index| subject.delete index }
-        subject.stats.should == { :references => 0, :trigrams => 0 }
-        subject.find('Port-au-Prince').should be_empty
+        expect(subject.stats).to eq({ :references => 0, :trigrams => 0 })
+        expect(subject.find('Port-au-Prince')).to be_empty
       end
     end
 
@@ -416,7 +421,7 @@ describe Blurrily::Map do
           map.save(path.to_s)
           map = described_class.load(path.to_s)
           map.delete(index)
-          map.stats[:references].should == 0
+          expect(map.stats[:references]).to eq(0)
         end
       end
 
@@ -426,7 +431,7 @@ describe Blurrily::Map do
           map.put 'Port-au-Prince', index
           map.save(path.to_s)
           map = described_class.load(path.to_s)
-          map.stats[:references].should == index+1 # index starts from 0
+          expect(map.stats[:references]).to eq(index+1) # index starts from 0
         end
       end
     end
