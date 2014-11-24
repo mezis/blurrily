@@ -8,7 +8,7 @@
 
 > Show me photos of **Marakech** !
 >
-> Here aresome photos of **Marrakesh**, Morroco.
+> Here are some photos of **Marrakesh**, Morroco.
 > Did you mean **Martanesh**, Albania, **Marakkanam**, India, or **Marasheshty**, Romania?
 
 Blurrily finds misspelled, prefix, or partial needles in a haystack of
