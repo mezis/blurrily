@@ -16,7 +16,7 @@ strings, quickly. It scales well: its response time is typically 1-2ms on
 user-input datasets and 75-100ms on pathological datasets
 ([more](#benchmarks)).
 
-Blurrily is compatible and tested with all MRI Rubies from 1.9.3 to 2.1.2.
+Blurrily is compatible and tested with all MRI Rubies from 1.9.3 to 2.2.0.
 It is tested on Linux 2.6 (32bit and 64bit) and MacOS X 10.8.
 
 Blurrily uses a tweaked [trigram](http://en.wikipedia.org/wiki/N-gram)-based
