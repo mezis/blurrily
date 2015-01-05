@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    blurrily (1.0.1)
+    blurrily (1.0.2)
       activesupport (~> 4)
       eventmachine
 
