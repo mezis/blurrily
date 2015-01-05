@@ -5,6 +5,9 @@
   Trigram map creation, persistence, and qurying.
 
 */
+#ifndef __STORAGE_H__
+#define __STORAGE_H__
+
 #include <inttypes.h>
 #include "tokeniser.h"
 #include "blurrily.h"
@@ -12,7 +15,7 @@
 struct trigram_map_t;
 typedef struct trigram_map_t* trigram_map;
 
-struct PACKED_STRUCT trigram_match_t {
+struct BR_PACKED_STRUCT trigram_match_t {
   uint32_t reference;
   uint32_t matches;
   uint32_t weight;
@@ -113,3 +116,4 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
 */
 int blurrily_storage_stats(trigram_map haystack, trigram_stat_t* stats);
 
+#endif
