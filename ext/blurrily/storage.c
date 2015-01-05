@@ -33,7 +33,7 @@
 /******************************************************************************/
 
 /* one trigram entry -- client reference and sorting weight */
-struct PACKED_STRUCT trigram_entry_t
+struct BR_PACKED_STRUCT trigram_entry_t
 {
   uint32_t reference;
   uint32_t weight;
@@ -44,7 +44,7 @@ typedef struct trigram_entry_t trigram_entry_t;
 /* collection of entries for a given trigram */
 /* <entries> points to an array of <buckets> entries */
 /* of which <used> are filled */
-struct PACKED_STRUCT trigram_entries_t
+struct BR_PACKED_STRUCT trigram_entries_t
 {
   uint32_t         buckets;
   uint32_t         used;
@@ -59,7 +59,7 @@ typedef struct trigram_entries_t trigram_entries_t;
 
 /* hash map of all possible trigrams to collection of entries */
 /* there are 28^3 = 19,683 possible trigrams */
-struct PACKED_STRUCT trigram_map_t
+struct BR_PACKED_STRUCT trigram_map_t
 {
   char              magic[6];           /* the string "trigra" */
   uint8_t           big_endian;

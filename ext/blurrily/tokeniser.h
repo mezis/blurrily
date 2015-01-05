@@ -14,6 +14,9 @@
   Each trigram is represented by a 16-bit integer.
 
 */
+#ifndef __TOKENISER_H__
+#define __TOKENISER_H__
+
 #include <inttypes.h>
 
 #define TRIGRAM_BASE 28
@@ -39,3 +42,5 @@ int blurrily_tokeniser_parse_string(const char* input, trigram_t* output);
   Returns positive on success, negative on failure.
 */
 int blurrily_tokeniser_trigram(trigram_t input, char* output);
+
+#endif
