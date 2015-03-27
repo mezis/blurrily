@@ -36,6 +36,10 @@ Or install it yourself as:
 
     $ gem install blurrily
 
+## Docker
+
+You can optionally run [Burrily as a Docker Container](https://github.com/mrmattwright/docker-blurrily). Maintained by [MrMattWright](https://github.com/mrmattwright).
+
 ## Usage
 
 You can use blurrily as a client/server combination (recommended in
