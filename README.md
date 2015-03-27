@@ -38,7 +38,7 @@ Or install it yourself as:
 
 ## Docker
 
-You can optionally run [Burrily as a Docker Container](https://github.com/mrmattwright/docker-blurrily)
+You can optionally run [Burrily as a Docker Container](https://github.com/mrmattwright/docker-blurrily). Maintained by [MrMattWright](https://github.com/mrmattwright).
 
 ## Usage
 
