@@ -14,7 +14,7 @@ describe Blurrily::Map do
 
   describe '#stats' do
     let(:result) { subject.stats }
-    
+
     it 'has :references' do
       expect(result[:references]).to be_a_kind_of(Integer)
     end
@@ -30,46 +30,46 @@ describe Blurrily::Map do
     let(:trigrams)   { subject.stats[:trigrams] }
 
     it 'stores references' do
-      subject.put 'foobar', 123, 0
+      subject.put 'foobar', '10000000-0000-4000-A000-000000000123', 0
       expect(references).to eq(1)
       expect(trigrams).to   eq(7)
     end
 
     it 'returns number of added trigrams' do
-      expect(subject.put('foobar', 123)).to eq(7)
-      expect(subject.put('foobar', 123)).to eq(0)
+      expect(subject.put('foobar', '10000000-0000-4000-A000-000000000123')).to eq(7)
+      expect(subject.put('foobar', '10000000-0000-4000-A000-000000000123')).to eq(0)
     end
 
     it 'does not store duplicate references' do
-      2.times { subject.put 'foobar', 123, 0 }
+      2.times { subject.put 'foobar', '10000000-0000-4000-A000-000000000123', 0 }
       expect(references).to eq(1)
       expect(trigrams).to eq(7)
     end
 
     it 'accepts empty strings' do
-      subject.put '', 123, 0
+      subject.put '', '10000000-0000-4000-A000-000000000123', 0
       expect(references).to eq(1)
       expect(trigrams).to eq(1)
     end
 
     it 'accepts non-letter characters' do
-      subject.put '@€%é', 123, 0
+      subject.put '@€%é', '10000000-0000-4000-A000-000000000123', 0
       expect(references).to eq(1)
       expect(trigrams).to eq(2)
     end
 
     it 'ignores dupes after save/load cycle' do
-      subject.put 'london', 123
+      subject.put 'london', '10000000-0000-4000-A000-000000000123'
       subject.save path.to_s
       map = described_class.load path.to_s
-      map.put 'paris', 123
+      map.put 'paris', '10000000-0000-4000-A000-000000000123'
       expect(map.find('paris')).to be_empty
     end
 
     it 'makes map dirty' do
       subject.save path.to_s
       path.delete_if_exists
-      subject.put 'london', 123
+      subject.put 'london', '10000000-0000-4000-A000-000000000123'
       subject.save path.to_s
       expect(path).to exist
     end
@@ -77,39 +77,39 @@ describe Blurrily::Map do
 
   describe '#delete' do
     it 'removes references' do
-      subject.put 'london', 123, 0
-      subject.delete 123
+      subject.put 'london', '10000000-0000-4000-A000-000000000123', 0
+      subject.delete '10000000-0000-4000-A000-000000000123'
       expect(subject.stats[:trigrams]).to eq(0)
       expect(subject.stats[:references]).to eq(0)
     end
 
     it 'makes map dirty' do
-      subject.put 'london', 123, 0
+      subject.put 'london', '10000000-0000-4000-A000-000000000123', 0
       subject.save path.to_s
       path.delete_if_exists
-      subject.delete 123
+      subject.delete '10000000-0000-4000-A000-000000000123'
       subject.save path.to_s
       expect(path).to exist
     end
 
     context 'with duplicate references' do
       it 'removes duplicates' do
-        3.times { subject.put 'london', 123, 0 }
-        subject.delete 123
+        3.times { subject.put 'london', '10000000-0000-4000-A000-000000000123', 0 }
+        subject.delete '10000000-0000-4000-A000-000000000123'
         expect(subject.stats[:trigrams]).to eq(0)
         expect(subject.stats[:references]).to eq(0)
       end
     end
 
     it 'ignores missing references' do
-      subject.delete 123
+      subject.delete '10000000-0000-4000-A000-000000000123'
       expect(subject.stats[:trigrams]).to eq(0)
     end
 
     it 'permits re-adds' do
-      subject.put 'london', 1337
-      subject.delete 1337
-      subject.put 'paris', 1337
+      subject.put 'london', '10000000-0000-4000-A000-000000001337'
+      subject.delete '10000000-0000-4000-A000-000000001337'
+      subject.put 'paris', '10000000-0000-4000-A000-000000001337'
       expect(subject.find('paris')).not_to be_empty
     end
 
@@ -136,45 +136,45 @@ describe Blurrily::Map do
     context 'with a limit option' do
       let(:limit) { 2 }
       it 'returns fewer results' do
-        5.times { |idx| subject.put 'london', idx, 0 }
+        5.times { |idx| subject.put 'london', "10000000-0000-4000-A000-00000000100#{idx}", 0 }
         expect(result.length).to eq(2)
       end
     end
 
     it 'works with duplicated references' do
-      subject.put needle, 123
-      subject.put 'london2', 123
+      subject.put needle, '10000000-0000-4000-A000-000000000123'
+      subject.put 'london2', '10000000-0000-4000-A000-000000000123'
       expect(result.length).to eq(1)
-      expect(result.first.first).to eq(123)
+      expect(result.first.first).to eq('10000000-0000-4000-A000-000000000123')
     end
 
     it 'works with duplicated needles and references' do
-      subject.put needle, 123
-      subject.put needle, 123
+      subject.put needle, '10000000-0000-4000-A000-000000000123'
+      subject.put needle, '10000000-0000-4000-A000-000000000123'
       expect(result.length).to eq(1)
-      expect(result.first.first).to eq(123)
+      expect(result.first.first).to eq('10000000-0000-4000-A000-000000000123')
     end
 
     it 'returns perfect matches' do
-      subject.put 'london', 123, 0
-      expect(result.first).to eq([123, 7, 6])
+      subject.put 'london', '10000000-0000-4000-A000-000000000123', 0
+      expect(result.first).to eq(['10000000-0000-4000-A000-000000000123', 7, 6])
     end
 
     it 'favours exact matches' do
-      subject.put 'lon',                 125, 0
-      subject.put 'london city airport', 124, 0
-      subject.put 'london',              123, 0
-      expect(result.first.first).to eq(123)
+      subject.put 'lon',                 '10000000-0000-4000-A000-000000000125', 0
+      subject.put 'london city airport', '10000000-0000-4000-A000-000000000124', 0
+      subject.put 'london',              '10000000-0000-4000-A000-000000000123', 0
+      expect(result.first.first).to eq('10000000-0000-4000-A000-000000000123')
     end
 
     it 'ignores duplicate references' do
-      subject.put 'london', 123
-      subject.put 'paris',  123
+      subject.put 'london', '10000000-0000-4000-A000-000000000123'
+      subject.put 'paris',  '10000000-0000-4000-A000-000000000123'
       expect(result).not_to be_empty
     end
 
     context 'when needle is mis-spelt' do
-      before { subject.put 'london', 123, 0 }
+      before { subject.put 'london', '10000000-0000-4000-A000-000000000123', 0 }
 
       it 'tolerates insertions' do
         needle.replace 'lonXdon'
@@ -193,19 +193,28 @@ describe Blurrily::Map do
     end
 
     it 'sorts by descending matchiness' do
-      subject.put 'New York',   1001, 0
-      subject.put 'Yorkshire',  1002, 0
-      subject.put 'York',       1003, 0
-      subject.put 'Yorkisthan', 1004, 0
+      subject.put 'New York',   '10000000-0000-4000-A000-000000001001', 0
+      subject.put 'Yorkshire',  '10000000-0000-4000-A000-000000001002', 0
+      subject.put 'York',       '10000000-0000-4000-A000-000000001003', 0
+      subject.put 'Yorkisthan', '10000000-0000-4000-A000-000000001004', 0
       needle.replace 'York'
-      expect(result.map(&:first)).to eq([1003, 1001, 1002, 1004])
+      expect(result.map(&:first)).to eq([
+        '10000000-0000-4000-A000-000000001003',
+        '10000000-0000-4000-A000-000000001001',
+        '10000000-0000-4000-A000-000000001002',
+        '10000000-0000-4000-A000-000000001004'
+      ])
     end
 
     it 'favours the lighter of two matches' do
-      subject.put 'london', 103, 103
-      subject.put 'london', 101, 101
-      subject.put 'london', 102, 102
-      expect(result.map(&:first)).to eq([101, 102, 103])
+      subject.put 'london', '10000000-0000-4000-A000-000000000103', 103
+      subject.put 'london', '10000000-0000-4000-A000-000000000101', 101
+      subject.put 'london', '10000000-0000-4000-A000-000000000102', 102
+      expect(result.map(&:first)).to eq([
+        '10000000-0000-4000-A000-000000000101',
+        '10000000-0000-4000-A000-000000000102',
+        '10000000-0000-4000-A000-000000000103'
+      ])
     end
   end
 
@@ -238,9 +247,9 @@ describe Blurrily::Map do
     before do
       path.delete_if_exists
 
-      subject.put 'london',  10, 0
-      subject.put 'paris',   11, 0
-      subject.put 'monaco',  12, 0
+      subject.put 'london',  '10000000-0000-4000-A000-000000000010', 0
+      subject.put 'paris',   '10000000-0000-4000-A000-000000000011', 0
+      subject.put 'monaco',  '10000000-0000-4000-A000-000000000012', 0
     end
 
     it 'creates a file on disk' do
@@ -285,9 +294,9 @@ describe Blurrily::Map do
     before do
       path.delete_if_exists
       Blurrily::Map.new.tap do |map|
-        map.put 'london',  10, 0
-        map.put 'paris',   11, 0
-        map.put 'monaco',  12, 0
+        map.put 'london',  '10000000-0000-4000-A000-000000000010', 0
+        map.put 'paris',   '10000000-0000-4000-A000-000000000011', 0
+        map.put 'monaco',  '10000000-0000-4000-A000-000000000012', 0
         map.save path.to_s
       end
     end
@@ -339,7 +348,7 @@ describe Blurrily::Map do
       end
 
       it '#put fails' do
-        expect { subject.put('london', 123) }.to raise_exception(closed_error)
+        expect { subject.put('london', '10000000-0000-4000-A000-000000000123') }.to raise_exception(closed_error)
       end
 
       it '#find fails' do
@@ -361,15 +370,15 @@ describe Blurrily::Map do
       let(:count) { 1024 } # enough cycles to force reallocations
 
       it 'puts' do
-        count.times { |index| subject.put 'Port-au-Prince', index }
+        count.times { |index| subject.put 'Port-au-Prince', "10000000-0000-4000-A000-00000001#{'%04d' % index}" }
         expect(subject.stats[:references]).to eq(count)
         expect(subject.find('Port-au-Prince')).not_to be_empty
       end
 
       it 'put/delete/find' do
         count.times do |index|
-          subject.put 'Port-au-Prince', index
-          subject.delete index
+          subject.put 'Port-au-Prince', "10000000-0000-4000-A000-00000002#{'%04d' % index}"
+          subject.delete "10000000-0000-4000-A000-00000002#{'%04d' % index}"
           expect(subject.stats).to eq({ :references => 0, :trigrams => 0 })
           expect(subject.find('Port-au-Prince')).to be_empty
         end
@@ -377,27 +386,27 @@ describe Blurrily::Map do
 
       it 'put/find/delete' do
         count.times do |index|
-          subject.put 'Port-au-Prince', index
+          subject.put 'Port-au-Prince', "10000000-0000-4000-A000-00000003#{'%04d' % index}"
           expect(subject.stats[:references]).to eq(1)
-          expect(subject.find('Port-au-Prince').first.first).to eq(index)
-          subject.delete index
+          expect(subject.find('Port-au-Prince').first.first).to eq("10000000-0000-4000-A000-00000003#{'%04d' % index}")
+          subject.delete "10000000-0000-4000-A000-00000003#{'%04d' % index}"
         end
       end
 
       it 'puts, many deletes' do
-        count.times { |index| subject.put 'Port-au-Prince', index }
-        count.times { |index| subject.delete index }
+        count.times { |index| subject.put 'Port-au-Prince', "10000000-0000-4000-A000-00000004#{'%04d' % index}" }
+        count.times { |index| subject.delete "10000000-0000-4000-A000-00000004#{'%04d' % index}" }
         expect(subject.stats).to eq({ :references => 0, :trigrams => 0 })
         expect(subject.find('Port-au-Prince')).to be_empty
       end
 
       it 'puts, reload, many deletes' do
-        count.times { |index| subject.put 'Port-au-Prince', index }
+        count.times { |index| subject.put 'Port-au-Prince', "10000000-0000-4000-A000-00000005#{'%04d' % index}" }
 
         subject.save(path.to_s)
         subject = described_class.load(path.to_s)
 
-        count.times { |index| subject.delete index }
+        count.times { |index| subject.delete "10000000-0000-4000-A000-00000005#{'%04d' % index}" }
         expect(subject.stats).to eq({ :references => 0, :trigrams => 0 })
         expect(subject.find('Port-au-Prince')).to be_empty
       end
@@ -406,7 +415,7 @@ describe Blurrily::Map do
     context 'with 100 iterations' do
       let(:count) { 100 }
       it 'cold loads' do
-        count.times { |index| subject.put 'Port-au-Prince', index }
+        count.times { |index| subject.put 'Port-au-Prince', "10000000-0000-4000-A000-00000006#{'%04d' % index}" }
         subject.save(path.to_s)
 
         count.times do
@@ -417,10 +426,10 @@ describe Blurrily::Map do
       it 'put/save/load/delete' do
         map = subject
         count.times do |index|
-          map.put 'Port-au-Prince', index
+          map.put 'Port-au-Prince', "10000000-0000-4000-A000-00000007#{'%04d' % index}"
           map.save(path.to_s)
           map = described_class.load(path.to_s)
-          map.delete(index)
+          map.delete("10000000-0000-4000-A000-00000007#{'%04d' % index}")
           expect(map.stats[:references]).to eq(0)
         end
       end
@@ -428,7 +437,7 @@ describe Blurrily::Map do
       it 'put/save/load' do
         map = subject
         count.times do |index|
-          map.put 'Port-au-Prince', index
+          map.put 'Port-au-Prince', "10000000-0000-4000-A000-00000008#{'%04d' % index}"
           map.save(path.to_s)
           map = described_class.load(path.to_s)
           expect(map.stats[:references]).to eq(index+1) # index starts from 0

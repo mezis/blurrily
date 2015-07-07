@@ -2,6 +2,7 @@
 #include <assert.h>
 #include "storage.h"
 #include "blurrily.h"
+#include <uuid/uuid.h>
 
 static VALUE eClosedError = Qnil;
 static VALUE eBlurrilyModule = Qnil;
@@ -82,13 +83,15 @@ static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE
   trigram_map  haystack  = (trigram_map)NULL;
   int          res       = -1;
   char*        needle    = StringValuePtr(rb_needle);
-  uint32_t     reference = NUM2UINT(rb_reference);
+  char*        reference = StringValueCStr(rb_reference);
+  uuid_t       ref_uuid;
+  uuid_parse(reference, ref_uuid);
   uint32_t     weight    = NUM2UINT(rb_weight);
 
   if (raise_if_closed(self)) return Qnil;
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
-  res = blurrily_storage_put(haystack, needle, reference, weight);
+  res = blurrily_storage_put(haystack, needle, ref_uuid, weight);
   assert(res >= 0);
 
   return INT2NUM(res);
@@ -98,13 +101,15 @@ static VALUE blurrily_put(VALUE self, VALUE rb_needle, VALUE rb_reference, VALUE
 
 static VALUE blurrily_delete(VALUE self, VALUE rb_reference) {
   trigram_map  haystack  = (trigram_map)NULL;
-  uint32_t     reference = NUM2UINT(rb_reference);
+  char*        reference = StringValueCStr(rb_reference);
+  uuid_t       ref_uuid;
+  uuid_parse(reference, ref_uuid);
   int          res       = -1;
 
   if (raise_if_closed(self)) return Qnil;
   Data_Get_Struct(self, struct trigram_map_t, haystack);
 
-  res = blurrily_storage_delete(haystack, reference);
+  res = blurrily_storage_delete(haystack, ref_uuid);
   assert(res >= 0);
 
   return INT2NUM(res);
@@ -153,7 +158,9 @@ static VALUE blurrily_find(VALUE self, VALUE rb_needle, VALUE rb_limit) {
   rb_matches = rb_ary_new();
   for (int k = 0; k < res; ++k) {
     VALUE rb_match = rb_ary_new();
-    rb_ary_push(rb_match, rb_uint_new(matches[k].reference));
+    char ref_str[37] = "";
+    uuid_unparse(matches[k].reference, ref_str);
+    rb_ary_push(rb_match, rb_str_new2(ref_str));
     rb_ary_push(rb_match, rb_uint_new(matches[k].matches));
     rb_ary_push(rb_match, rb_uint_new(matches[k].weight));
     rb_ary_push(rb_matches, rb_match);

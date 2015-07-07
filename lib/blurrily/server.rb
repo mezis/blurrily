@@ -38,6 +38,7 @@ module Blurrily
       end
 
       def receive_data(data)
+        #puts data.inspect
         data.split("\n").each do |line|
           output = @processor.process_command(line.strip)
           output << "\n"

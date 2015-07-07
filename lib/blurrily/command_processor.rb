@@ -24,17 +24,17 @@ module Blurrily
     COMMANDS = %w(FIND PUT DELETE CLEAR)
 
     def on_PUT(map_name, needle, ref, weight = nil)
-      raise ProtocolError, 'Invalid reference' unless ref =~ /^\d+$/ && REF_RANGE.include?(ref.to_i)
+      raise ProtocolError, 'Invalid reference' unless valid_uuid?(ref)
       raise ProtocolError, 'Invalid weight'    unless weight.nil? || (weight =~ /^\d+$/ && WEIGHT_RANGE.include?(weight.to_i))
 
-      @map_group.map(map_name).put(*[needle, ref.to_i, weight.to_i].compact)
+      @map_group.map(map_name).put(*[needle, ref, weight.to_i].compact)
       return
     end
 
     def on_DELETE(map_name, ref)
-      raise ProtocolError, 'Invalid reference' unless ref =~ /^\d+$/ && REF_RANGE.include?(ref.to_i)
+      raise ProtocolError, 'Invalid reference' unless valid_uuid?(ref)
 
-      @map_group.map(map_name).delete(ref.to_i)
+      @map_group.map(map_name).delete(ref)
       return
     end
 
@@ -48,6 +48,10 @@ module Blurrily
     def on_CLEAR(map_name)
       @map_group.clear(map_name)
       return
+    end
+
+    def valid_uuid? s
+      !(s =~ /[A-F1-9][A-F0-9]{7}-[A-F0-9]{4}-4[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}/i).nil?
     end
   end
 end

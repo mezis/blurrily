@@ -29,49 +29,49 @@ describe 'client/server integration' do
   end
 
   it 'does single find' do
-    @client.put 'paris', 123
-    expect(@client.find('paris')).to match([[123, 6, 5]])
-    expect(@client.find('pariis')).to match([[123, 5, 5]])
+    @client.put 'paris', '10000000-0000-4000-A000-000000000123'
+    expect(@client.find('paris')).to match([['10000000-0000-4000-A000-000000000123', 6, 5]])
+    expect(@client.find('pariis')).to match([['10000000-0000-4000-A000-000000000123', 5, 5]])
   end
 
   it 'does put/find cycles' do
-    @client.put 'paris', 123
-    @client.put 'paris', 456
-    expect(@client.find('paris').map(&:first)).to match([123, 456])
-    expect(@client.find('pariis').map(&:first)).to match([123, 456])
+    @client.put 'paris', '10000000-0000-4000-A000-000000000123'
+    @client.put 'paris', '10000000-0000-4000-A000-000000000456'
+    expect(@client.find('paris').map(&:first)).to match(['10000000-0000-4000-A000-000000000123', '10000000-0000-4000-A000-000000000456'])
+    expect(@client.find('pariis').map(&:first)).to match(['10000000-0000-4000-A000-000000000123', '10000000-0000-4000-A000-000000000456'])
   end
 
   it 'does put/delete/find cycles' do
-    @client.put 'paris', 123
-    @client.put 'paris', 456
-    @client.delete 456
-    expect(@client.find('paris').map(&:first)).to match([123])
+    @client.put 'paris', '10000000-0000-4000-A000-000000000123'
+    @client.put 'paris', '10000000-0000-4000-A000-000000000456'
+    @client.delete '10000000-0000-4000-A000-000000000456'
+    expect(@client.find('paris').map(&:first)).to match(['10000000-0000-4000-A000-000000000123'])
   end
 
   it 'handles multiple databases' do
     @other_client = Blurrily::Client.new(:port => @port, :db_name => 'qux')
-    @client.put 'rome', 1
-    @other_client.put 'venice', 2
+    @client.put 'rome', '10000000-0000-4000-A000-000000000001'
+    @other_client.put 'venice', '10000000-0000-4000-A000-000000000002'
 
-    expect(@client.find('rome').map(&:first)).to eq([1])
+    expect(@client.find('rome').map(&:first)).to eq(['10000000-0000-4000-A000-000000000001'])
     expect(@client.find('venice')).to be_empty
-    expect(@other_client.find('venice').map(&:first)).to eq([2])
+    expect(@other_client.find('venice').map(&:first)).to eq(['10000000-0000-4000-A000-000000000002'])
     expect(@other_client.find('rome')).to be_empty
   end
 
   it 'saves files on SIGURS1' do
-    @client.put 'rome', 1
+    @client.put 'rome', '10000000-0000-4000-A000-000000000001'
     Process.kill('USR1', @pid)
     wait_for_file(data_file)
   end
 
   it 'uses existing maps' do
     map = Blurrily::Map.new
-    map.put('london', 1337)
+    map.put('london', '10000000-0000-4000-A000-000000001337')
     data_dir.mkpath
     map.save(data_file.to_s)
 
-    expect(@client.find('london').map(&:first)).to eq([1337])
+    expect(@client.find('london').map(&:first)).to eq(['10000000-0000-4000-A000-000000001337'])
   end
 
 end

@@ -21,10 +21,10 @@ describe Blurrily::MapGroup do
 
     it "loads from file if exists rather than creating a new db" do
       map1 = subject.map('location_en')
-      map1.put('aaa',123,0)
+      map1.put('aaa','10000000-0000-4000-A000-000000000001',0)
       subject.save
       loaded_map = described_class.new('.').map('location_en')
-      expect(loaded_map.find('aaa').first.first).to eq(123)
+      expect(loaded_map.find('aaa').first.first).to eq('10000000-0000-4000-A000-000000000001')
     end
   end
 
