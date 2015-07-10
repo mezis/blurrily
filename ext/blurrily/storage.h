@@ -1,5 +1,5 @@
 /*
-  
+
   storage.h --
 
   Trigram map creation, persistence, and qurying.
@@ -16,7 +16,7 @@ struct trigram_map_t;
 typedef struct trigram_map_t* trigram_map;
 
 struct BR_PACKED_STRUCT trigram_match_t {
-  uint32_t reference;
+  uuid_t reference;
   uint32_t matches;
   uint32_t weight;
 };
@@ -30,28 +30,28 @@ typedef struct trigram_stat_t {
 } trigram_stat_t;
 
 
-/* 
+/*
   Create a new trigram map, resident in memory.
 */
 int blurrily_storage_new(trigram_map* haystack);
 
-/* 
+/*
   Load an existing trigram map from disk.
 */
 int blurrily_storage_load(trigram_map* haystack, const char* path);
 
-/* 
+/*
   Release resources claimed by <new> or <open>.
 */
 int blurrily_storage_close(trigram_map* haystack);
 
-/* 
+/*
   Mark resources managed by Ruby GC.
 */
 void blurrily_storage_mark(trigram_map haystack);
 
 
-/* 
+/*
   Persist to disk what <blurrily_storage_new> or <blurrily_storage_open>
   gave you.
 */
@@ -67,7 +67,7 @@ int blurrily_storage_save(trigram_map haystack, const char* path);
 
   Returns positive on success, negative on failure.
 */
-int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t reference, uint32_t weight);
+int blurrily_storage_put(trigram_map haystack, const char* needle, uuid_t reference, uint32_t weight);
 
 /*
   Check the map for an existing <reference>.
@@ -93,7 +93,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
 
   Returns positive on success, negative on failure.
 */
-int blurrily_storage_delete(trigram_map haystack, uint32_t reference);
+int blurrily_storage_delete(trigram_map haystack, uuid_t reference);
 
 /*
   Return at most <limit> entries matching <needle> from the <haystack>.

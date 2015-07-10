@@ -1,5 +1,7 @@
 # Blurrily — Millisecond fuzzy string matching
 
+> Note: This fork is the UUID based version, see [mezis/blurrily](https://github.com/mezis/blurrily) for the original (amazing) integer based version.
+
 [![Gem Version](https://badge.fury.io/rb/blurrily.svg)](http://badge.fury.io/rb/blurrily)
 [![Build Status](https://travis-ci.org/mezis/blurrily.svg?branch=master)](https://travis-ci.org/mezis/blurrily)
 [![Dependency Status](https://gemnasium.com/mezis/blurrily.svg)](https://gemnasium.com/mezis/blurrily)
@@ -55,19 +57,20 @@ Fire up a blurrily server:
     $ blurrily
 
 Open up a console and connect:
-  
+
   	$ irb -rubygems
   	> require 'blurrily/client'
   	> client = Blurrily::Client.new
 
 Store a needle with a reference:
+> **Note:** Support restricted to UUID v4, beginning with a non-zero ([Line 66 in libuuid](http://fossies.org/dox/e2fsprogs-1.42.13/uuid_2parse_8c_source.html) seems to be at fault?).
 
-    > client.put('London', 1337)
+    > client.put('London', '10000000-0000-4000-A000-000000001337')
 
 Recover a reference form the haystack:
 
     > client.find('lonndon')
-    #=> [1337]
+    #=> ['10000000-0000-4000-A000-000000001337']
 
 ### Standalone
 
@@ -77,12 +80,12 @@ Create the in-memory database:
 
 Store a needle with a reference:
 
-    > map.put('London', 1337)
+    > map.put('London', '10000000-0000-4000-A000-000000001337')
 
 Recover a reference form the haystack:
 
     > map.find('lonndon')
-    #=> [1337]
+    #=> ['10000000-0000-4000-A000-000000001337']
 
 Save the database to disk:
 
@@ -175,7 +178,6 @@ darwin-x86_64 and linux-amd64).
 
 Database files are very compressible; `bzip2` typically shrinks them to 20%
 of their original size.
-
 
 ## Benchmarks
 

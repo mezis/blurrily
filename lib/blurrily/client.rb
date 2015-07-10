@@ -55,7 +55,10 @@ module Blurrily
       raise(ArgumentError, "LIMIT value must be in #{LIMIT_RANGE}") unless LIMIT_RANGE.include?(limit)
 
       cmd = ["FIND", @db_name, needle, limit]
-      send_cmd_and_get_results(cmd).map(&:to_i).each_slice(3).to_a
+      send_cmd_and_get_results(cmd).each_slice(3).to_a.each do |a|
+        a[1] = a[1].to_i if Integer(a[1])
+        a[2] = a[2].to_i if Integer(a[1])
+      end
     end
 
     # Index a given record.
@@ -106,7 +109,7 @@ module Blurrily
     end
 
     def check_valid_ref(ref)
-      raise(ArgumentError, "REF value must be in #{REF_RANGE}") unless REF_RANGE.include?(ref)
+      raise(ArgumentError, "REF value must be uuid") unless valid_uuid?(ref)
     end
 
 
@@ -130,6 +133,10 @@ module Blurrily
       else
         raise Error, 'Server did not respect protocol'
       end
+    end
+
+    def valid_uuid? s
+      !(s =~ /[A-F1-9][A-F0-9]{7}-[A-F0-9]{4}-4[A-F0-9]{3}-[89AB][A-F0-9]{3}-[A-F0-9]{12}/i).nil?
     end
 
   end

@@ -7,6 +7,7 @@
 #include <sys/errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <uuid/uuid.h>
 
 #ifdef PLATFORM_LINUX
   #include <linux/limits.h>
@@ -35,7 +36,7 @@
 /* one trigram entry -- client reference and sorting weight */
 struct BR_PACKED_STRUCT trigram_entry_t
 {
-  uint32_t reference;
+  uuid_t  reference;
   uint32_t weight;
 };
 typedef struct trigram_entry_t trigram_entry_t;
@@ -69,7 +70,7 @@ struct BR_PACKED_STRUCT trigram_map_t
   uint32_t          total_trigrams;
   size_t            mapped_size;        /* when mapped from disk, the number of bytes mapped */
   blurrily_refs_t*  refs;
-  
+
   trigram_entries_t map[TRIGRAM_COUNT]; /* this whole structure is ~500KB */
 };
 typedef struct trigram_map_t trigram_map_t;
@@ -122,7 +123,7 @@ static int compare_entries(const void* left_p, const void* right_p)
 {
   trigram_entry_t* left  = (trigram_entry_t*)left_p;
   trigram_entry_t* right = (trigram_entry_t*)right_p;
-  return (int)left->reference - (int)right->reference;
+  return uuid_compare(left->reference, right->reference);
 }
 
 /* compares matches on #matches (descending) then weight (ascending) */
@@ -140,7 +141,7 @@ static int compare_matches(const void* left_p, const void* right_p)
 /******************************************************************************/
 
 static void sort_map_if_dirty(trigram_entries_t* map)
-{ 
+{
   int res = -1;
   if (! map->dirty) return;
 
@@ -387,7 +388,9 @@ void add_all_refs(trigram_map haystack)
     trigram_entry_t*   ptr = map->entries;
     assert(map->used <= map->buckets);
     for (uint32_t j = 0; j < map->used; ++j, ++ptr) {
-      uint32_t ref = ptr->reference;
+      uuid_t ref;
+      uuid_copy(ref, ptr->reference);
+
       blurrily_refs_add(haystack->refs, ref);
     }
   }
@@ -395,7 +398,7 @@ void add_all_refs(trigram_map haystack)
 
 /******************************************************************************/
 
-int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t reference, uint32_t weight)
+int blurrily_storage_put(trigram_map haystack, const char* needle, uuid_t reference, uint32_t weight)
 {
   int        nb_trigrams  = -1;
   size_t     length       = strlen(needle);
@@ -411,11 +414,12 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
   trigrams = SMALLOC(length+1, trigram_t);
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
 
-
   for (int k = 0; k < nb_trigrams; ++k) {
     trigram_t          t       = trigrams[k];
     trigram_entries_t* map     = &haystack->map[t];
-    trigram_entry_t    entry   = { reference, weight };
+    trigram_entry_t    entry;
+    entry.weight = weight;
+    uuid_copy(entry.reference, reference);
 
     assert(t < TRIGRAM_COUNT);
     assert(map-> used <= map-> buckets);
@@ -436,7 +440,7 @@ int blurrily_storage_put(trigram_map haystack, const char* needle, uint32_t refe
       new_entries = SMALLOC(new_buckets, trigram_entry_t);
       assert(new_entries != NULL);
       memcpy(new_entries, map->entries, map->buckets * sizeof(trigram_entry_t));
-      /* scribble the rest of the map*/      
+      /* scribble the rest of the map*/
       // memset(new_entries + map->buckets, 0xFF, (new_buckets - map->buckets) * sizeof(trigram_entry_t));
 
       #ifndef NDEBUG
@@ -485,12 +489,13 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   int              nb_matches  = -1;
   trigram_match_t* matches     = NULL;
   trigram_match_t* match_ptr   = NULL;
-  uint32_t         last_ref    = (uint32_t)-1;
+  uuid_t           last_ref;
   int              nb_results  = 0;
 
   trigrams = SMALLOC(length+1, trigram_t);
   nb_trigrams = blurrily_tokeniser_parse_string(needle, trigrams);
   if (nb_trigrams == 0) goto cleanup;
+  assert(nb_trigrams > 0);
 
   LOG("%d trigrams in '%s'\n", nb_trigrams, needle);
 
@@ -525,19 +530,19 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
 
   /* count distinct matches */
   entry_ptr  = entries;
-  last_ref   = -1;
+  uuid_clear(last_ref);
   nb_matches = 0;
   for (int k = 0; k < nb_entries; ++k) {
-    if (entry_ptr->reference != last_ref) {
-      last_ref = entry_ptr->reference;
+    if (uuid_compare(entry_ptr->reference, last_ref) != 0) {
+      uuid_copy(last_ref, entry_ptr->reference);
       ++nb_matches;
     }
-    ++entry_ptr;    
+    ++entry_ptr;
   }
   assert(entry_ptr == entries + nb_entries);
   LOG("total %zd distinct matches\n", nb_matches);
 
-  /* allocate maches result */
+  /* allocate matches result */
   matches = SMALLOC(nb_matches, trigram_match_t);
   assert(matches != NULL);
 
@@ -545,19 +550,21 @@ int blurrily_storage_find(trigram_map haystack, const char* needle, uint16_t lim
   entry_ptr = entries;
   match_ptr = matches;
   match_ptr->matches   = 0;
-  match_ptr->reference = entry_ptr->reference; /* setup the first match to */
+  uuid_copy(match_ptr->reference, entry_ptr->reference); /* setup the first match to */
   match_ptr->weight    = entry_ptr->weight;    /* simplify the loop */
+
+
   for (int k = 0; k < nb_entries; ++k) {
-    if (entry_ptr->reference != match_ptr->reference) {
+    if (uuid_compare(entry_ptr->reference, match_ptr->reference) != 0) {
       ++match_ptr;
-      match_ptr->reference = entry_ptr->reference;
+      uuid_copy(match_ptr->reference, entry_ptr->reference);
       match_ptr->weight    = entry_ptr->weight;
       match_ptr->matches   = 1;
     } else {
       match_ptr->matches  += 1;
     }
     assert((int) match_ptr->matches <= nb_trigrams);
-    ++entry_ptr;    
+    ++entry_ptr;
   }
   assert(match_ptr == matches + nb_matches - 1);
   assert(entry_ptr == entries + nb_entries);
@@ -581,7 +588,7 @@ cleanup:
 
 /******************************************************************************/
 
-int blurrily_storage_delete(trigram_map haystack, uint32_t reference)
+int blurrily_storage_delete(trigram_map haystack, uuid_t reference)
 {
   int trigrams_deleted = 0;
 
@@ -591,7 +598,7 @@ int blurrily_storage_delete(trigram_map haystack, uint32_t reference)
 
     for (unsigned int j = 0; j < map->used; ++j) {
       entry = map->entries + j;
-      if (entry->reference != reference) continue;
+      if (uuid_compare(entry->reference, reference)!=0) continue;
 
       /* swap with the last entry */
       *entry = map->entries[map->used - 1];
@@ -606,8 +613,8 @@ int blurrily_storage_delete(trigram_map haystack, uint32_t reference)
   haystack->total_trigrams -= trigrams_deleted;
   if (trigrams_deleted > 0) haystack->total_references -= 1;
 
-  if (haystack->refs) blurrily_refs_remove(haystack->refs, reference); 
-  
+  if (haystack->refs) blurrily_refs_remove(haystack->refs, reference);
+
   return trigrams_deleted;
 }
 

@@ -41,7 +41,7 @@ describe Blurrily::Server do
 
     it 'saves when quitting' do
       socket = TCPSocket.new('localhost', @port)
-      socket.puts("PUT\twords\tmerveilleux\t1")
+      socket.puts("PUT\twords\tsomething\t10000000-0000-4000-A000-000000000000")
       socket.gets
       socket.close
 
