@@ -83,6 +83,32 @@ module Blurrily
       return
     end
 
+    # Public: Index a given record.
+    #
+    # array containing
+    #   needle  - The string you wish to index. Must not contain tabs. Required
+    #   ref     - The indentifying value of the record being indexed. Must be numeric. Required
+    #   weight  - Weight of this particular reference. Default 0. Don't change unless you know what you're doing. Optional.
+    #
+    # Examples
+    #
+    #  @client.put([['London',123,0],[]])
+    #  # => OK
+    #
+    # Returns something to let you know that all is well.
+    def bulk_put(needles)
+      check_valid_needles(needles)
+      cmd = []
+      needles.each do |needle_data|
+        needle = needle_data[0]
+        ref    = needle_data[1]
+        weight = needle_data[2] || 0
+        cmd << ["PUT", @db_name, needle, ref, weight]
+      end
+      send_cmd_and_get_results(cmd)
+      return
+    end
+
     def delete(ref)
       check_valid_ref(ref)
       cmd = ['DELETE', @db_name, ref]
@@ -95,11 +121,17 @@ module Blurrily
       return
     end
 
-
     private
 
-
     PORT_RANGE = 1025..32768
+
+    def check_valid_needles(needles)
+      raise(ArgumentError, "bad needles. must be an array") if !needles.kind_of?(Array) || needles.empty?
+      needles.each do |needle_data|
+        check_valid_needle(needle_data[0])
+        check_valid_ref(needle_data[1])
+      end
+    end
 
     def check_valid_needle(needle)
       raise(ArgumentError, "bad needle") if !needle.kind_of?(String) || needle.empty? || needle.include?("\t")
@@ -115,7 +147,11 @@ module Blurrily
     end
 
     def send_cmd_and_get_results(argv)
-      output = argv.join("\t")
+      if argv[0].kind_of?(Array) # bulk input is array of arrays
+        output = argv.map{ |x| x.join("\t") }.join("\n")
+      else
+        output = argv.join("\t")
+      end
       connection.puts output
       input = connection.gets
       case input
