@@ -1,7 +1,7 @@
 require 'mkmf'
 
 PLATFORM = `uname`.strip.upcase
-SHARED_FLAGS = "-DPLATFORM_#{PLATFORM} --std=c99 -Wall -Wextra -Werror"
+SHARED_FLAGS = "-DPLATFORM_#{PLATFORM} --std=c99 -Wall -Wextra"
 
 case PLATFORM
 when 'LINUX'
