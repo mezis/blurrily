@@ -2,7 +2,6 @@
 
 [![Gem Version](https://badge.fury.io/rb/blurrily.svg)](http://badge.fury.io/rb/blurrily)
 [![Build Status](https://travis-ci.org/mezis/blurrily.svg?branch=master)](https://travis-ci.org/mezis/blurrily)
-[![Dependency Status](https://gemnasium.com/mezis/blurrily.svg)](https://gemnasium.com/mezis/blurrily)
 [![Code Climate](https://codeclimate.com/github/mezis/blurrily.svg)](https://codeclimate.com/github/mezis/blurrily)
 [![Coverage Status](https://coveralls.io/repos/mezis/blurrily/badge.png)](https://coveralls.io/r/mezis/blurrily)
 
@@ -19,10 +18,10 @@ user-input datasets and 75-100ms on pathological datasets
 Blurrily is compatible and tested with all MRI Rubies from 1.9.3 to 2.2.0.
 It is tested on Linux 2.6 (32bit and 64bit) and MacOS X 10.8.
 
-Blurrily uses a tweaked [trigram](http://en.wikipedia.org/wiki/N-gram)-based
+Blurrily uses a tweaked [trigram](https://en.wikipedia.org/wiki/N-gram)-based
 approach to find good matches. If you're using ActiveRecord and looking for
 a lightweight (albeit much slower), in-process, Rails-friendly version of
-this, check out [fuzzily](http://github.com/mezis/fuzzily), a Ruby gem to
+this, check out [fuzzily](https://github.com/mezis/fuzzily), a Ruby gem to
 perform fuzzy text searching in ActiveRecord.
 
 
