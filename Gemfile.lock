@@ -69,7 +69,7 @@ GEM
       yard (~> 0.8)
     pry-nav (0.2.4)
       pry (>= 0.9.10, < 0.11.0)
-    rake (10.4.2)
+    rake (13.0.1)
     rake-compiler (0.9.5)
       rake
     rb-fsevent (0.9.4)
