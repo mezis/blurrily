@@ -100,11 +100,11 @@ GEM
       tins (~> 0.8)
     terminal-notifier-guard (1.6.4)
     thor (0.18.1)
-    thread_safe (0.3.4)
+    thread_safe (0.3.6)
     timers (4.0.1)
       hitimes
     tins (0.13.2)
-    tzinfo (1.2.2)
+    tzinfo (1.2.10)
       thread_safe (~> 0.1)
     yard (0.8.7.6)
 
